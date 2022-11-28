@@ -46,23 +46,24 @@ public class Move implements Listener {
 		
 		if (ArenaManager.getInstance().getArena(player) == null) {
 			//check if player wants to go inside (except spectators of course)
-			for (var arena : ArenaManager.getInstance().getArenas()) {
-				if (arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING)
-					continue;
-				
-				for (var plot : arena.getPlots()) {
-					if (plot.getBoundary().isInside(to) && !plot.getBoundary().isInside(from)) {
-						//teleport this intruder back
-						player.teleport(from);
-						MessageManager.getInstance().send(player, ChatColor.RED + "You can't access this plot when this arena is in-game");
-					} else if (plot.getBoundary().isInside(to)) {
-						//use algorithm to find nearest block to push them out of the arena
-						player.teleport(getClosestPositionOutsideActivePlot(player.getLocation()));
-						MessageManager.getInstance().send(player, ChatColor.RED + "You can't access this plot when this arena is in-game");
-					}
-				}
-			}
-			
+            if (!player.hasPermission("bg.admin")) {
+                for (var arena : ArenaManager.getInstance().getArenas()) {
+                    if (arena.getState() == GameState.WAITING || arena.getState() == GameState.STARTING)
+                        continue;
+
+                    for (var plot : arena.getPlots()) {
+                        if (plot.getBoundary().isInside(to) && !plot.getBoundary().isInside(from)) {
+                            //teleport this intruder back
+                            player.teleport(from);
+                            MessageManager.getInstance().send(player, ChatColor.RED + "You can't access this plot when this arena is in-game");
+                        } else if (plot.getBoundary().isInside(to)) {
+                            //use algorithm to find nearest block to push them out of the arena
+                            player.teleport(getClosestPositionOutsideActivePlot(player.getLocation()));
+                            MessageManager.getInstance().send(player, ChatColor.RED + "You can't access this plot when this arena is in-game");
+                        }
+                    }
+                }
+            }
 			return;
 		}
 		

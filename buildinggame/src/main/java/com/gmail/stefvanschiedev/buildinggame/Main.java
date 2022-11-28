@@ -1,6 +1,5 @@
 package com.gmail.stefvanschiedev.buildinggame;
 
-import be.maximvdw.placeholderapi.PlaceholderAPI;
 import co.aikar.commands.BukkitCommandManager;
 import co.aikar.commands.ConditionFailedException;
 import co.aikar.commands.InvalidCommandArgument;
@@ -82,58 +81,58 @@ public class Main extends JavaPlugin {
     /**
      * An instance of this class
      */
-	private static Main instance;
+    private static Main instance;
 
     /**
      * The delay for loading this plugin
      */
-	private final LoadCooldown load = new LoadCooldown();
+    private final LoadCooldown load = new LoadCooldown();
 
     /**
      * The plugin id used by bStats
      */
-	private static final int BSTATS_PLUGIN_ID = 627;
+    private static final int BSTATS_PLUGIN_ID = 627;
 
     /**
      * Called whenever this plugin is being enabled
      *
      * @since 2.1.0
      */
-	@Override
-	public void onEnable() {
-		instance = this;
+    @Override
+    public void onEnable() {
+        instance = this;
 
-		getLogger().info("Loading files");
-		SettingsManager.getInstance().setup(this, true);
+        getLogger().info("Loading files");
+        SettingsManager.getInstance().setup(this, true);
 
-		//loading metrics
-		getLogger().info("Loading metrics");
+        //loading metrics
+        getLogger().info("Loading metrics");
         new MetricsLite(this, BSTATS_PLUGIN_ID);
-		
-		if (SettingsManager.getInstance().getConfig().getBoolean("loading.load-after-plugins")) {
-			getLogger().info("Waiting until other plugins are loaded");
-		
-			load.runTaskTimer(this, 20L, 20L);
-		} else
-			loadPlugin(false);
-	}
+
+        if (SettingsManager.getInstance().getConfig().getBoolean("loading.load-after-plugins")) {
+            getLogger().info("Waiting until other plugins are loaded");
+
+            load.runTaskTimer(this, 20L, 20L);
+        } else
+            loadPlugin(false);
+    }
 
     /**
      * Called whenever this plugin is being disabled
      *
      * @since 2.1.0
      */
-	@Override
-	public void onDisable() {
-		for (var arena : ArenaManager.getInstance().getArenas()) {
-			if (arena.getPlayers() > 0)
-				arena.stop();
-		}
-		
-		if (StatManager.getInstance().getMySQLDatabase() == null)
-			StatManager.getInstance().saveToFile();
-		else
-			StatManager.getInstance().saveToDatabase();
+    @Override
+    public void onDisable() {
+        for (var arena : ArenaManager.getInstance().getArenas()) {
+            if (arena.getPlayers() > 0)
+                arena.stop();
+        }
+
+        if (StatManager.getInstance().getMySQLDatabase() == null)
+            StatManager.getInstance().saveToFile();
+        else
+            StatManager.getInstance().saveToDatabase();
 
         if (!SettingsManager.getInstance().getRunnable().isCancelled())
             SettingsManager.getInstance().getRunnable().cancel();
@@ -141,54 +140,54 @@ public class Main extends JavaPlugin {
         getLogger().info("BuildingGame has been disabled");
 
         instance = null;
-	}
+    }
 
     /**
      * Loads the entire plugin
      *
      * @since 2.1.0
      */
-	public void loadPlugin(boolean reload) {
-		long start = System.currentTimeMillis();
+    public void loadPlugin(boolean reload) {
+        long start = System.currentTimeMillis();
 
-		//this has to be done quite early
+        //this has to be done quite early
         if (!reload) {
             Gui.registerProperty("particle-type", Particle::valueOf);
             Gui.registerProperty("biome", Biome::valueOf);
             Gui.registerProperty("dye-color", DyeColor::valueOf);
             Gui.registerProperty("material", Material::valueOf);
         }
-		
-		getLogger().info("Loading files");
-		SettingsManager.getInstance().setup(this, false);
-		
-		getLogger().info("Loading arenas");
-		ArenaManager.getInstance().setup();
-		ArenaModeManager.getInstance().setup();
-		BuildTimerManager.getInstance().setup();
-		LobbyManager.getInstance().setup();
-		LobbyTimerManager.getInstance().setup();
-		MinPlayersManager.getInstance().setup();
+
+        getLogger().info("Loading files");
+        SettingsManager.getInstance().setup(this, false);
+
+        getLogger().info("Loading arenas");
+        ArenaManager.getInstance().setup();
+        ArenaModeManager.getInstance().setup();
+        BuildTimerManager.getInstance().setup();
+        LobbyManager.getInstance().setup();
+        LobbyTimerManager.getInstance().setup();
+        MinPlayersManager.getInstance().setup();
         MatchesManager.getInstance().setup();
-		VoteTimerManager.getInstance().setup();
-		WinTimerManager.getInstance().setup();
-		
-		getLogger().info("Loading plots");
-		PlotManager.getInstance().setup();
-		//has to be down here for some config stuff
+        VoteTimerManager.getInstance().setup();
+        WinTimerManager.getInstance().setup();
+
+        getLogger().info("Loading plots");
+        PlotManager.getInstance().setup();
+        //has to be down here for some config stuff
         MaxPlayersManager.getInstance().setup();
-		LocationManager.getInstance().setup();
-		BoundaryManager.getInstance().setup();
-		FloorManager.getInstance().setup();
-		
-		getLogger().info("Loading main spawn");
-		MainSpawnManager.getInstance().setup();
+        LocationManager.getInstance().setup();
+        BoundaryManager.getInstance().setup();
+        FloorManager.getInstance().setup();
+
+        getLogger().info("Loading main spawn");
+        MainSpawnManager.getInstance().setup();
 
         PluginManager pm = Bukkit.getPluginManager();
 
-		getLogger().info("Loading soft dependencies");
-		if (pm.isPluginEnabled("Vault"))
-			SDVault.getInstance().setup();
+        getLogger().info("Loading soft dependencies");
+        if (pm.isPluginEnabled("Vault"))
+            SDVault.getInstance().setup();
 
         if (pm.isPluginEnabled("PlaceholderAPI")) {
             try {
@@ -216,14 +215,8 @@ public class Main extends JavaPlugin {
             }
         }
 
-        if (pm.isPluginEnabled("MVdWPlaceholderAPI")) {
-            PlaceholderSupplier.getPlaceholderReplacements().forEach((placeholder, biFunction) ->
-                PlaceholderAPI.registerPlaceholder(this, placeholder, event ->
-                    biFunction.apply(event.getOfflinePlayer(), event.getPlaceholder())));
-        }
-
-		getLogger().info("Loading commands");
-		if (!reload) {
+        getLogger().info("Loading commands");
+        if (!reload) {
             var manager = new BukkitCommandManager(this);
 
             //noinspection deprecation
@@ -280,29 +273,29 @@ public class Main extends JavaPlugin {
                 pm.isPluginEnabled("HolographicDisplays"));
             manager.registerCommand(new CommandManager());
         }
-		
-		getLogger().info("Loading stats");
-		StatManager.getInstance().setup();
 
-		//loading achievements should happen after the statistics have been loaded
+        getLogger().info("Loading stats");
+        StatManager.getInstance().setup();
+
+        //loading achievements should happen after the statistics have been loaded
         Achievement.loadAchievements();
 
-		getLogger().info("Loading listeners");
-		if (!reload) {
-			pm.registerEvents(new BlockDispenseItem(), this);
-			pm.registerEvents(new BlockEdit(), this);
-			pm.registerEvents(new JoinSignCreate(), this);
-			pm.registerEvents(new LeaveSignCreate(), this);
-			pm.registerEvents(new StatSignCreate(), this);
+        getLogger().info("Loading listeners");
+        if (!reload) {
+            pm.registerEvents(new BlockDispenseItem(), this);
+            pm.registerEvents(new BlockEdit(), this);
+            pm.registerEvents(new JoinSignCreate(), this);
+            pm.registerEvents(new LeaveSignCreate(), this);
+            pm.registerEvents(new StatSignCreate(), this);
             pm.registerEvents(new UpdateLoadedSigns(), this);
-			pm.registerEvents(new SpectateSignCreate(), this);
-			pm.registerEvents(new SignBreak(), this);
-			pm.registerEvents(new LiquidFlow(), this);
-			pm.registerEvents(new PistonBlockMove(), this);
-			
-			//starts the connection to bungeecord
+            pm.registerEvents(new SpectateSignCreate(), this);
+            pm.registerEvents(new SignBreak(), this);
+            pm.registerEvents(new LiquidFlow(), this);
+            pm.registerEvents(new PistonBlockMove(), this);
+
+            //starts the connection to bungeecord
             if (SettingsManager.getInstance().getConfig().getBoolean("bungeecord.enable"))
-			    BungeeCordHandler.getInstance();
+                BungeeCordHandler.getInstance();
 
             if (pm.isPluginEnabled("WorldEdit"))
                 WorldEdit.getInstance().getEventBus().register(new WorldEditBoundaryAssertion());
@@ -314,79 +307,79 @@ public class Main extends JavaPlugin {
                 CitizensAPI.getTraitFactory().registerTrait(traitInfo);
             }
 
-			pm.registerEvents(new ClickJoinSign(), this);
-			pm.registerEvents(new ClickLeaveSign(), this);
-			pm.registerEvents(new ClickSpectateSign(), this);
-			pm.registerEvents(new Drop(), this);
-			pm.registerEvents(new Interact(), this);
-			pm.registerEvents(new Leave(), this);
-			pm.registerEvents(new Move(), this);
-			pm.registerEvents(new PlaceBucket(), this);
-			pm.registerEvents(new PlaceIgnoreSpectators(), this);
-			if (SettingsManager.getInstance().getConfig().getBoolean("chat.adjust"))
-				pm.registerEvents(new Chat(), this);
-			pm.registerEvents(new CommandBlocker(), this);
-			pm.registerEvents(new EntityDamage(), this);
-			pm.registerEvents(new TakeDamage(), this);
-			pm.registerEvents(new LoseFood(), this);
-			
-			//entity events
-			pm.registerEvents(new ChickenSpawnByEgg(), this);
-			pm.registerEvents(new EntityExplode(), this);
-			pm.registerEvents(new EntityOptionsMenu(), this);
-			pm.registerEvents(new EntitySpawn(), this);
+            pm.registerEvents(new ClickJoinSign(), this);
+            pm.registerEvents(new ClickLeaveSign(), this);
+            pm.registerEvents(new ClickSpectateSign(), this);
+            pm.registerEvents(new Drop(), this);
+            pm.registerEvents(new Interact(), this);
+            pm.registerEvents(new Leave(), this);
+            pm.registerEvents(new Move(), this);
+            pm.registerEvents(new PlaceBucket(), this);
+            pm.registerEvents(new PlaceIgnoreSpectators(), this);
+            if (SettingsManager.getInstance().getConfig().getBoolean("chat.adjust"))
+                pm.registerEvents(new Chat(), this);
+            pm.registerEvents(new CommandBlocker(), this);
+            pm.registerEvents(new EntityDamage(), this);
+            pm.registerEvents(new TakeDamage(), this);
+            pm.registerEvents(new LoseFood(), this);
 
-			//scoreboards
-			pm.registerEvents(new MainScoreboardJoinShow(), this);
-			pm.registerEvents(new MainScoreboardWorldChange(), this);
-			
-			//stats
-			//saved
-			pm.registerEvents(new BreakStat(), this);
-			pm.registerEvents(new FirstStat(), this);
-			pm.registerEvents(new PlaceStat(), this);
-			pm.registerEvents(new PlaysStat(), this);
-			pm.registerEvents(new SecondStat(), this);
-			pm.registerEvents(new ThirdStat(), this);
-			//unsaved
-			pm.registerEvents(new UnsavedStatsPlace(), this);
-			
-			//structure
-			pm.registerEvents(new TreeGrow(), this);
-		
-			if (StatManager.getInstance().getMySQLDatabase() != null) {
-				pm.registerEvents(new JoinPlayerStats(), this);
-				pm.registerEvents(new QuitPlayerStats(), this);
-			}
-		}
-		
-		getLogger().info("Loading signs");
-		SignManager.getInstance().setup();
-		
-		getLogger().info("Loading timer");
-		new ParticleRender().runTaskTimer(this, 0L, 10L);
-		new ScoreboardUpdater().runTaskTimer(this, 0L, SettingsManager.getInstance().getConfig()
-                .getLong("scoreboard-update-delay"));
-		new StatSaveTimer().runTaskTimerAsynchronously(this, 0L, SettingsManager.getInstance().getConfig()
-                .getLong("stats.save-delay"));
-		new EntityTimer().runTaskTimer(this, 0L, 20L);
-		new StatSignUpdater().runTaskTimerAsynchronously(this, 0L, 1L);
-		
-		long end = System.currentTimeMillis();
+            //entity events
+            pm.registerEvents(new ChickenSpawnByEgg(), this);
+            pm.registerEvents(new EntityExplode(), this);
+            pm.registerEvents(new EntityOptionsMenu(), this);
+            pm.registerEvents(new EntitySpawn(), this);
 
-		long duration = end - start;
-		String time;
+            //scoreboards
+            pm.registerEvents(new MainScoreboardJoinShow(), this);
+            pm.registerEvents(new MainScoreboardWorldChange(), this);
 
-		if (duration < 1000) {
-		    time = duration + " milliseconds";
-        } else if (duration < 60000) {
-		    time = duration / 1000.0 + " seconds";
-        } else {
-		    time = (duration / 60000) + ":" + (duration % 60000) / 1000.0 + " minutes";
+            //stats
+            //saved
+            pm.registerEvents(new BreakStat(), this);
+            pm.registerEvents(new FirstStat(), this);
+            pm.registerEvents(new PlaceStat(), this);
+            pm.registerEvents(new PlaysStat(), this);
+            pm.registerEvents(new SecondStat(), this);
+            pm.registerEvents(new ThirdStat(), this);
+            //unsaved
+            pm.registerEvents(new UnsavedStatsPlace(), this);
+
+            //structure
+            pm.registerEvents(new TreeGrow(), this);
+
+            if (StatManager.getInstance().getMySQLDatabase() != null) {
+                pm.registerEvents(new JoinPlayerStats(), this);
+                pm.registerEvents(new QuitPlayerStats(), this);
+            }
         }
 
-		getLogger().info("BuildingGame has been enabled in " + time + '!');
-	}
+        getLogger().info("Loading signs");
+        SignManager.getInstance().setup();
+
+        getLogger().info("Loading timer");
+        new ParticleRender().runTaskTimer(this, 0L, 10L);
+        new ScoreboardUpdater().runTaskTimer(this, 0L, SettingsManager.getInstance().getConfig()
+            .getLong("scoreboard-update-delay"));
+        new StatSaveTimer().runTaskTimerAsynchronously(this, 0L, SettingsManager.getInstance().getConfig()
+            .getLong("stats.save-delay"));
+        new EntityTimer().runTaskTimer(this, 0L, 20L);
+        new StatSignUpdater().runTaskTimerAsynchronously(this, 0L, 1L);
+
+        long end = System.currentTimeMillis();
+
+        long duration = end - start;
+        String time;
+
+        if (duration < 1000) {
+            time = duration + " milliseconds";
+        } else if (duration < 60000) {
+            time = duration / 1000.0 + " seconds";
+        } else {
+            time = (duration / 60000) + ":" + (duration % 60000) / 1000.0 + " minutes";
+        }
+
+        getLogger().info("BuildingGame has been enabled in " + time + '!');
+    }
 
     /**
      * Returns an instance of this plugin for the singleton principle
@@ -394,9 +387,9 @@ public class Main extends JavaPlugin {
      * @return an instance of this plugin
      * @since 2.1.0
      */
-	@NotNull
+    @NotNull
     @Contract(pure = true)
     public static Main getInstance() {
-		return instance;
-	}
+        return instance;
+    }
 }

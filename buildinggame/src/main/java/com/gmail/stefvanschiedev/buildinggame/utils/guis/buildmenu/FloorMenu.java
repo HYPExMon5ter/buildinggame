@@ -29,41 +29,41 @@ public class FloorMenu extends ChestGui {
     /**
      * YAML Configuration for the messages.yml
      */
-	private static final YamlConfiguration MESSAGES = SettingsManager.getInstance().getMessages();
+    private static final YamlConfiguration MESSAGES = SettingsManager.getInstance().getMessages();
 
     /**
      * The last time the floor was changed (according to System.currentMillis())
      */
     private long floorChange;
 
-	/**
+    /**
      * An array of materials which should not be included in the menu
      */
-	private static final Material[] SKIP_MATERIALS = {
-		Material.ACACIA_DOOR,
+    private static final Material[] SKIP_MATERIALS = {
+        Material.ACACIA_DOOR,
         Material.ACACIA_WALL_SIGN,
-		Material.AIR,
+        Material.AIR,
         Material.ATTACHED_MELON_STEM,
         Material.ATTACHED_PUMPKIN_STEM,
         Material.BAMBOO_SAPLING,
         Material.BEETROOTS,
-		Material.BIRCH_DOOR,
+        Material.BIRCH_DOOR,
         Material.BIRCH_WALL_SIGN,
         Material.BLACK_WALL_BANNER,
         Material.BLUE_WALL_BANNER,
         Material.BRAIN_CORAL_WALL_FAN,
-		Material.BREWING_STAND,
+        Material.BREWING_STAND,
         Material.BROWN_WALL_BANNER,
         Material.BUBBLE_COLUMN,
         Material.BUBBLE_CORAL_WALL_FAN,
-		Material.CARROT,
+        Material.CARROT,
         Material.CARROTS,
-		Material.CAULDRON,
+        Material.CAULDRON,
         Material.CAVE_AIR,
-		Material.COCOA,
+        Material.COCOA,
         Material.CREEPER_WALL_HEAD,
         Material.CYAN_WALL_BANNER,
-		Material.DARK_OAK_DOOR,
+        Material.DARK_OAK_DOOR,
         Material.DARK_OAK_WALL_SIGN,
         Material.DEAD_BRAIN_CORAL_WALL_FAN,
         Material.DEAD_BUBBLE_CORAL_WALL_FAN,
@@ -71,26 +71,26 @@ public class FloorMenu extends ChestGui {
         Material.DEAD_HORN_CORAL_WALL_FAN,
         Material.DEAD_TUBE_CORAL_WALL_FAN,
         Material.DRAGON_WALL_HEAD,
-		Material.END_GATEWAY,
-		Material.END_PORTAL,
-		Material.FIRE,
+        Material.END_GATEWAY,
+        Material.END_PORTAL,
+        Material.FIRE,
         Material.FIRE_CORAL_WALL_FAN,
-		Material.FLOWER_POT,
-		Material.FROSTED_ICE,
+        Material.FLOWER_POT,
+        Material.FROSTED_ICE,
         Material.GRAY_WALL_BANNER,
         Material.GREEN_WALL_BANNER,
         Material.HORN_CORAL_WALL_FAN,
-		Material.JUNGLE_DOOR,
+        Material.JUNGLE_DOOR,
         Material.JUNGLE_WALL_SIGN,
         Material.KELP_PLANT,
-		Material.LAVA,
+        Material.LAVA,
         Material.LIGHT_BLUE_WALL_BANNER,
         Material.LIGHT_GRAY_WALL_BANNER,
         Material.LIME_WALL_BANNER,
         Material.MAGENTA_WALL_BANNER,
-		Material.MELON_STEM,
-		Material.MOVING_PISTON,
-		Material.NETHER_PORTAL,
+        Material.MELON_STEM,
+        Material.MOVING_PISTON,
+        Material.NETHER_PORTAL,
         Material.OAK_WALL_SIGN,
         Material.ORANGE_WALL_BANNER,
         Material.PINK_WALL_BANNER,
@@ -98,7 +98,7 @@ public class FloorMenu extends ChestGui {
         Material.PLAYER_WALL_HEAD,
         Material.POPPED_CHORUS_FRUIT,
         Material.POPPY,
-		Material.POTATO,
+        Material.POTATO,
         Material.POTATOES,
         Material.POTTED_ACACIA_SAPLING,
         Material.POTTED_ALLIUM,
@@ -125,46 +125,48 @@ public class FloorMenu extends ChestGui {
         Material.POTTED_SPRUCE_SAPLING,
         Material.POTTED_WHITE_TULIP,
         Material.POTTED_WITHER_ROSE,
-		Material.PUMPKIN_STEM,
+        Material.PUMPKIN_STEM,
         Material.PURPLE_WALL_BANNER,
         Material.RED_WALL_BANNER,
         Material.REDSTONE_WALL_TORCH,
-		Material.REDSTONE_WIRE,
+        Material.REDSTONE_WIRE,
         Material.SKELETON_WALL_SKULL,
-		Material.SPRUCE_DOOR,
+        Material.SPRUCE_DOOR,
         Material.SPRUCE_WALL_SIGN,
         Material.SWEET_BERRY_BUSH,
         Material.TALL_SEAGRASS,
-		Material.TRIPWIRE,
+        Material.TRIPWIRE,
         Material.TUBE_CORAL_WALL_FAN,
         Material.VOID_AIR,
         Material.WALL_TORCH,
-		Material.WATER,
+        Material.WATER,
         Material.WHITE_WALL_BANNER,
         Material.WITHER_SKELETON_WALL_SKULL,
         Material.YELLOW_WALL_BANNER,
         Material.ZOMBIE_WALL_HEAD
-	};
+    };
 
-	/**
+    /**
      * Constructs a new FloorMenu for the provided plot
      *
      * @param plot the plot this menu belongs to
      * @see Plot
      */
-	FloorMenu(final Plot plot) {
-		super(6, MessageManager.translate(MESSAGES.getString("gui.floor.title")));
+    FloorMenu(final Plot plot) {
+        super(6, MessageManager.translate(MESSAGES.getString("gui.floor.title")));
 
         var paginatedPane = new PaginatedPane(0, 0, 9, 5);
 
-        for (var page = 0; page < Math.ceil(getBlocks().size() / 45.0); page++) {
+        List<Material> blocks = getBlocks();
+
+        for (var page = 0; page < Math.ceil(blocks.size() / 45.0); page++) {
             var outlinePane = new OutlinePane(0, 0, 9, 5);
 
             for (var i = 0; i < 45; i++) {
-                if (i + (45 * page) == getBlocks().size())
+                if (i + (45 * page) == blocks.size())
                     break;
 
-                Material material = getBlocks().get(i + (45 * page));
+                Material material = blocks.get(i + (45 * page));
 
                 outlinePane.addItem(new GuiItem(new ItemStack(material), event -> {
                     plot.getFloor().getAllBlocks().forEach(b -> b.setType(material));
@@ -239,33 +241,33 @@ public class FloorMenu extends ChestGui {
         addPane(previous);
         addPane(back);
         addPane(next);
-	}
+    }
 
-	/**
+    /**
      * Returns a list of materials without the once that should be blocked from the menu specified in the config.yml and
      * the {@link #SKIP_MATERIALS} array
      *
      * @return a list of materials
      * @since 4.0.0
      */
-	@NotNull
-	@Contract(pure = true)
-	private static List<Material> getBlocks() {
-		YamlConfiguration config = SettingsManager.getInstance().getConfig();
-		var blocks = new ArrayList<Material>();
-		
-		for (Material material : Material.values()) {
+    @NotNull
+    @Contract(pure = true)
+    private static List<Material> getBlocks() {
+        YamlConfiguration config = SettingsManager.getInstance().getConfig();
+        var blocks = new ArrayList<Material>();
+
+        for (Material material : Material.values()) {
             //noinspection deprecation
             if (material.isBlock() && !material.isLegacy() && !Arrays.asList(SKIP_MATERIALS).contains(material) &&
-                    !config.getStringList("blocks.blocked").contains(material.toString()
-                            .toLowerCase(Locale.getDefault())) &&
-                    !config.getStringList("gui.floor.excluded-blocks").contains(material.toString()
-                            .toLowerCase(Locale.getDefault())))
-				blocks.add(material);
-		}
-		
-		return blocks;
-	}
+                !config.getStringList("blocks.blocked").contains(material.toString()
+                    .toLowerCase(Locale.getDefault())) &&
+                !config.getStringList("gui.floor.excluded-blocks").contains(material.toString()
+                    .toLowerCase(Locale.getDefault())))
+                blocks.add(material);
+        }
+
+        return blocks;
+    }
 
     /**
      * Sets the last time the floor was changed specified as milliseconds elapsed since the UNIX epoch.
@@ -273,8 +275,8 @@ public class FloorMenu extends ChestGui {
      * @param lastFloorChange the last time the floor was changed
      * @since 7.1.0
      */
-	public void setLastFloorChange(long lastFloorChange) {
-	    this.floorChange = lastFloorChange;
+    public void setLastFloorChange(long lastFloorChange) {
+        this.floorChange = lastFloorChange;
     }
 
     /**
@@ -283,8 +285,8 @@ public class FloorMenu extends ChestGui {
      * @return the time the floor was last changed
      * @since 7.1.0
      */
-	@Contract(pure = true)
-	public long getLastFloorChange() {
-	    return floorChange;
+    @Contract(pure = true)
+    public long getLastFloorChange() {
+        return floorChange;
     }
 }
