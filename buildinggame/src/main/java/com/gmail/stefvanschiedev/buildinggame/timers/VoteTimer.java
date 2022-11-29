@@ -260,7 +260,6 @@ public class VoteTimer extends Timer {
                     }));
 				}
 
-				arena.getWinTimer().runTaskTimer(Main.getInstance(), 20L, 20L);
 				running = false;
 				this.cancel();
 				return;

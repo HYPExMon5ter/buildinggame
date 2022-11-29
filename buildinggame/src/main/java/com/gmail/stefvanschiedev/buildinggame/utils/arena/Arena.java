@@ -1,9 +1,5 @@
 package com.gmail.stefvanschiedev.buildinggame.utils.arena;
 
-import java.io.File;
-import java.time.LocalDateTime;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
@@ -42,8 +38,6 @@ import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.scoreboards.MainScoreboardManager;
 import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
-import com.gmail.stefvanschiedev.buildinggame.timers.LobbyTimer;
-import com.gmail.stefvanschiedev.buildinggame.timers.WinTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
 import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
 import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
@@ -177,16 +171,6 @@ public class Arena {
      */
 	private TeamSelection teamSelection;
 
-	/**
-     * The lobby timer
-     */
-    private LobbyTimer lobbyTimer;
-
-    /**
-     * The win timer
-     */
-    private WinTimer winTimer;
-
     /**
      * The build timer
      */
@@ -258,7 +242,7 @@ public class Arena {
      *
      * @since 5.0.0
      */
-	private void forceStop() {
+	public void forceStop() {
 	    this.matches = maxMatches;
 	    nextMatch();
     }
@@ -273,17 +257,11 @@ public class Arena {
     @Nullable
     @Contract(pure = true)
 	public Timer getActiveTimer() {
-		if (lobbyTimer.isActive())
-			return lobbyTimer;
-
 		if (buildTimer.isActive())
 			return buildTimer;
 
 		if (voteTimer.isActive())
 			return voteTimer;
-
-		if (winTimer.isActive())
-			return winTimer;
 
 		return null;
 	}
@@ -593,19 +571,6 @@ public class Arena {
 	}
 
 	/**
-     * Returns the lobby timer
-     *
-     * @return the lobby timer
-     * @see LobbyTimer
-     * @since 2.1.0
-     */
-	@Nullable
-    @Contract(pure = true)
-	public LobbyTimer getLobbyTimer() {
-		return lobbyTimer;
-	}
-
-	/**
      * Returns the win scoreboard or null if it doesn't exist
      *
      * @return the win scoreboard
@@ -616,19 +581,6 @@ public class Arena {
     @Contract(pure = true)
 	public ArenaScoreboard getWinScoreboard(@NotNull Plot plot) {
 		return winScoreboards.get(plot);
-	}
-
-	/**
-     * Returns the win timer
-     *
-     * @return the win timer
-     * @see WinTimer
-     * @since 2.1.0
-     */
-	@Nullable
-    @Contract(pure = true)
-	public WinTimer getWinTimer() {
-		return winTimer;
 	}
 
     /**
@@ -823,14 +775,6 @@ public class Arena {
 		//show current joined player to others
         getUsedPlots().stream().flatMap(pl -> pl.getGamePlayers().stream()).forEach(gamePlayer ->
             gamePlayer.getPlayer().showPlayer(Main.getInstance(), player));
-		
-		if (getPlayers() >= minPlayers && !lobbyTimer.isActive() &&
-            (getState() == GameState.WAITING || getState() == GameState.STARTING)) {
-            lobbyTimer.runTaskTimer(Main.getInstance(), 0L, 20L);
-        }
-		
-		if (getPlayers() >= getMaxPlayers())
-			lobbyTimer.setSeconds(0);
 
 		var arena = this;
 
@@ -969,17 +913,9 @@ public class Arena {
         );
 
         //cancel wait timer when user amount drops below minimum
-        if (getPlayers() < minPlayers && lobbyTimer.isActive()) {
-            lobbyTimer.cancel();
-            setLobbyTimer(new LobbyTimer(arenas.getInt(name + ".lobby-timer"), this));
-        }
+
 
 		if (getPlayers() <= 1) {
-			if (getLobbyTimer().isActive()) {
-				lobbyTimer.cancel();
-				setLobbyTimer(new LobbyTimer(arenas.getInt(name + ".lobby-timer"), this));
-				setState(GameState.WAITING);
-			}
 			if (buildTimer.isActive()) {
 				buildTimer.cancel();
 				setBuildTimer(new BuildTimer(arenas.getInt(name + ".timer"), this));
@@ -988,11 +924,6 @@ public class Arena {
 			if (getVoteTimer().isActive()) {
 				voteTimer.cancel();
 				setVoteTimer(new VoteTimer(arenas.getInt(name + ".vote-timer"), this));
-				forceStop();
-			}
-			if (getWinTimer().isActive()) {
-				winTimer.cancel();
-				setWinTimer(new WinTimer(arenas.getInt(name + ".win-timer"), this));
 				forceStop();
 			}
 		}
@@ -1337,28 +1268,6 @@ public class Arena {
         );
     }
 
-	/**
-     * Sets the lobby timer
-     *
-     * @param lobbyTimer the new lobby timer
-     * @see LobbyTimer
-     * @since 2.1.0
-     */
-	public void setLobbyTimer(LobbyTimer lobbyTimer) {
-		this.lobbyTimer = lobbyTimer;
-	}
-
-	/**
-     * Sets the win timer
-     *
-     * @param winTimer the new win timer
-     * @see WinTimer
-     * @since 2.1.0
-     */
-	public void setWinTimer(WinTimer winTimer) {
-		this.winTimer = winTimer;
-	}
-
     /**
      * This is called before starting the game as to allow the players to vote on a subject if the subject choosing
      * should be done at {@link When#BEFORE_BUILD}. This will automatically progress the game when needed. When starting
@@ -1460,7 +1369,6 @@ public class Arena {
         matches++;
 
 		SignManager.getInstance().updateJoinSigns(this);
-
 		buildTimer.runTaskTimer(Main.getInstance(), 20L, 20L);
 	}
 
@@ -1472,12 +1380,17 @@ public class Arena {
      */
 	public void nextMatch() {
         YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
+        if (buildTimer.isActive()) {
+            buildTimer.cancel();
+        }
+        if (voteTimer.isActive()) {
+            voteTimer.cancel();
+        }
 
         setState(GameState.WAITING);
-        this.lobbyTimer = new LobbyTimer(arenas.getInt(name + ".lobby-timer"), this);
         this.buildTimer = new BuildTimer(arenas.getInt(name + ".timer"), this);
         this.voteTimer = new VoteTimer(arenas.getInt(name + ".vote-timer"), this);
-        this.winTimer = new WinTimer(arenas.getInt(name + ".win-timer"), this);
+
         voteScoreboards.replaceAll((plot, voteScoreboard) -> new VoteScoreboard(this));
         subject = null;
 

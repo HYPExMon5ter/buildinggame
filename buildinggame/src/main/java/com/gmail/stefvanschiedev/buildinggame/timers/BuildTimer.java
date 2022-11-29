@@ -110,7 +110,8 @@ public class BuildTimer extends Timer {
                 gamePlayer.getPlayer().setLevel(getSeconds())));
 		
 		//bossbar
-		bossBar.setTitle(MessageManager.translate(messages.getString("global.bossbar-header"))
+        assert arena.getSubject() != null;
+        bossBar.setTitle(MessageManager.translate(messages.getString("global.bossbar-header"))
 				.replace("%seconds%", getSeconds() + "")
 				.replace("%seconds_from_minutes%", getSecondsFromMinute() + "")
 				.replace("%minutes%", getMinutes() + "")

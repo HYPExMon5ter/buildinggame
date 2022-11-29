@@ -95,9 +95,7 @@ public class CommandManager extends BaseCommand {
         Arena arena = new Arena(name);
         arena.setMode(ArenaMode.SOLO);
         arena.setBuildTimer(new BuildTimer(buildTime, arena));
-        arena.setLobbyTimer(new LobbyTimer(lobbyTime, arena));
         arena.setVoteTimer(new VoteTimer(voteTime, arena));
-        arena.setWinTimer(new WinTimer(winTime, arena));
 
         ArenaManager.getInstance().getArenas().add(arena);
 
@@ -212,15 +210,19 @@ public class CommandManager extends BaseCommand {
     @CommandPermission("bg.forcestart")
     @CommandCompletion("@arenas")
     public void onForceStart(CommandSender sender, @Optional Arena arena) {
-        if (sender instanceof Player) {
-            var player = (Player) sender;
+        if (sender instanceof Player player) {
             var playerArena = ArenaManager.getInstance().getArena(player);
 
             if (playerArena != null && arena == null) {
-                playerArena.getLobbyTimer().setSeconds(0);
+                if (playerArena.getState() != GameState.WAITING && playerArena.getState() != GameState.STARTING &&
+                    playerArena.getState() != GameState.FULL) {
+                    MessageManager.getInstance().send(sender, ChatColor.RED + "The arena is already in game");
+                    return;
+                }
+                playerArena.preStart();
+                MessageManager.getInstance().send(sender, ChatColor.GREEN + "Started arena");
                 return;
             }
-
         }
 
         if (arena == null) {
@@ -239,8 +241,46 @@ public class CommandManager extends BaseCommand {
             MessageManager.getInstance().send(sender, ChatColor.RED + "The arena is already in game");
             return;
         }
+        arena.preStart();
+        MessageManager.getInstance().send(sender, ChatColor.GREEN + "Started arena");
+    }
 
-        arena.getLobbyTimer().setSeconds(0);
+    /**
+     * Called whenever a command sender wants to start an arena
+     *
+     * @param sender the command sender
+     * @param arena the arena, if the sender is a player and the player is in an arena, this may be null
+     */
+    @Subcommand("forcestop")
+    @Description("Force an arena to stop")
+    @CommandPermission("bg.forcestop")
+    @CommandCompletion("@arenas")
+    public void onForceStop(CommandSender sender, @Optional Arena arena) {
+        if (sender instanceof Player player) {
+            var playerArena = ArenaManager.getInstance().getArena(player);
+
+            if (playerArena != null && arena == null) {
+                if (playerArena.getState() == GameState.WAITING) {
+                    MessageManager.getInstance().send(sender, ChatColor.RED + "You can't stop a game that hasn't started");
+                    return;
+                }
+                playerArena.forceStop();
+                MessageManager.getInstance().send(sender, ChatColor.GREEN + "Stopped arena");
+                return;
+            }
+        }
+
+        if (arena == null) {
+            MessageManager.getInstance().send(sender, ChatColor.RED + "Please specify an arena");
+            return;
+        }
+
+        if (arena.getState() == GameState.WAITING) {
+            MessageManager.getInstance().send(sender, ChatColor.RED + "You can't stop a game that hasn't started");
+            return;
+        }
+        arena.forceStop();
+        MessageManager.getInstance().send(sender, ChatColor.GREEN + "Stopped arena");
     }
 
     /**
@@ -499,30 +539,6 @@ public class CommandManager extends BaseCommand {
         arena.setLobby(new PotentialLocation(() -> Bukkit.getWorld(worldName), blockX, blockY, blockZ, yaw, pitch));
 
         MessageManager.getInstance().send(player, messages.getStringList("commands.setlobby.success"));
-    }
-
-    /**
-     * Called whenever a command sender wants to set the lobby timer
-     *
-     * @param sender the command sender
-     * @param arena the arena
-     * @param seconds the amount of seconds the lobby timer should last
-     * @since 5.8.0
-     */
-    @Subcommand("setlobbytimer")
-    @Description("Change the lobby timer")
-    @CommandPermission("bg.setlobbytimer")
-    @CommandCompletion("@arenas @nothing")
-    public void onSetLobbyTimer(CommandSender sender, Arena arena, int seconds) {
-        YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
-
-        arenas.set(arena.getName() + ".lobby-timer", seconds);
-        SettingsManager.getInstance().save();
-
-        arena.setLobbyTimer(new LobbyTimer(seconds, arena));
-
-        MessageManager.getInstance().send(sender, ChatColor.GREEN + "Lobby timer setting for arena '" +
-            arena.getName() + "' changed to '" + seconds + '\'');
     }
 
     /**
@@ -842,30 +858,6 @@ public class CommandManager extends BaseCommand {
         arena.setVoteTimer(new VoteTimer(seconds, arena));
 
         MessageManager.getInstance().send(sender, ChatColor.GREEN + "Vote timer setting for arena '" +
-            arena.getName() + "' changed to '" + seconds + '\'');
-    }
-
-    /**
-     * Called whenever a command sender wants to change the win timer
-     *
-     * @param sender the command sender
-     * @param arena the arena
-     * @param seconds the amount of seconds
-     * @since 5.8.0
-     */
-    @Subcommand("setwintimer")
-    @Description("Change the win timer")
-    @CommandPermission("bg.setwintimer")
-    @CommandCompletion("@arenas @nothing")
-    public void onSetWinTimer(CommandSender sender, Arena arena, int seconds) {
-        YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
-
-        arenas.set(arena.getName() + ".win-timer", seconds);
-        SettingsManager.getInstance().save();
-
-        arena.setWinTimer(new WinTimer(seconds, arena));
-
-        MessageManager.getInstance().send(sender, ChatColor.GREEN + "Win timer setting for arena '" +
             arena.getName() + "' changed to '" + seconds + '\'');
     }
 
