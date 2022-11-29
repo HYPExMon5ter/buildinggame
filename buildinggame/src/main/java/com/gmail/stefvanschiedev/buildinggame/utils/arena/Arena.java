@@ -866,27 +866,6 @@ public class Arena {
                         }
                     }
 
-                    int slot = config.getInt("leave-item.slot");
-                    ItemStack item = player.getInventory().getItem(slot);
-
-                    if (item != null && item.getType() != Material.AIR) {
-                        Main.getInstance().getLogger().warning(
-                            "The leave item overrides a different item. This other item will not be visible. " +
-                                "Please change the slots in the config.yml file to fix this."
-                        );
-                    }
-
-                    Material material = SettingsManager.getInstance().getMaterial("leave-item.id",
-                        Material.BARRIER);
-
-                    player.getInventory().setItem(slot,
-                        new ItemBuilder(player, material)
-                            .setDisplayName(MessageManager.translate(messages.getString("leave-item.name"), player))
-                            .addContext("arena", ArenaDataType.getInstance(), Arena.this)
-                            .setClickEvent(ClickEvent.PLAYER_LEAVE_CLICK)
-                            .build()
-                    );
-                    player.updateInventory();
                 } else if (getState() == GameState.BUILDING) {
                     tryGiveOptionsMenu(player);
                 }
