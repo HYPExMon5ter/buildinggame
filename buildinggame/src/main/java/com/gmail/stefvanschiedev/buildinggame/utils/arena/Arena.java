@@ -1,14 +1,31 @@
 package com.gmail.stefvanschiedev.buildinggame.utils.arena;
 
-import java.util.*;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
-
-import com.gmail.stefvanschiedev.buildinggame.utils.*;
+import co.aikar.commands.annotation.Optional;
+import com.gmail.stefvanschiedev.buildinggame.Main;
+import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaJoinEvent;
+import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaLeaveEvent;
+import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaStartEvent;
+import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaStopEvent;
+import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.arenas.SignManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.scoreboards.MainScoreboardManager;
+import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
+import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
+import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
+import com.gmail.stefvanschiedev.buildinggame.utils.ChunkCoordinates;
+import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
+import com.gmail.stefvanschiedev.buildinggame.utils.guis.SubjectMenu;
 import com.gmail.stefvanschiedev.buildinggame.utils.guis.SubjectMenu.When;
+import com.gmail.stefvanschiedev.buildinggame.utils.guis.TeamSelection;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.ClickEvent;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.ItemBuilder;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.datatype.ArenaDataType;
+import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialBlockPosition;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
 import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
@@ -24,29 +41,13 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import com.gmail.stefvanschiedev.buildinggame.Main;
-import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaJoinEvent;
-import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaLeaveEvent;
-import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaStartEvent;
-import com.gmail.stefvanschiedev.buildinggame.api.events.ArenaStopEvent;
-import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.arenas.SignManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.scoreboards.MainScoreboardManager;
-import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
-import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
-import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
-import com.gmail.stefvanschiedev.buildinggame.utils.guis.SubjectMenu;
-import com.gmail.stefvanschiedev.buildinggame.utils.guis.TeamSelection;
-import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * Represents an arena
@@ -830,7 +831,7 @@ public class Arena {
      * @param player the player to leave
      * @since 2.1.0
      */
-	public void leave(Player player) {
+	public void leave(Player player, @Optional Boolean force) {
 	    YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
 		YamlConfiguration config = SettingsManager.getInstance().getConfig();
 		YamlConfiguration messages = SettingsManager.getInstance().getMessages();
@@ -851,7 +852,7 @@ public class Arena {
         //this shouldn't happen unless you screwed up with the api
         if (plot == null) {
             MessageManager.getInstance().send(player, "You're not in a game");
-            ArenaManager.getInstance().getArena(player).leave(player);
+            ArenaManager.getInstance().getArena(player).leave(player, false);
             return;
         }
 
@@ -882,7 +883,12 @@ public class Arena {
 			for (GamePlayer gamePlayer : usedPlot.getGamePlayers()) {
 				Player pl = gamePlayer.getPlayer();
 				if (pl.equals(player)) {
-					usedPlot.leave(gamePlayer);
+                    if (force) {
+                        usedPlot.leave(gamePlayer);
+                    }
+                    if (lobby != null) {
+                        lobby.teleport(player);
+                    }
 
 					if (state == GameState.WAITING)
 					    MessageManager.getInstance().send(player, messages.getStringList("leave.message.lobby"));
@@ -932,6 +938,7 @@ public class Arena {
 			getBossBar().removePlayer(player);
 		
 		SignManager.getInstance().updateJoinSigns(this);
+
 	}
 
     /**
@@ -1320,8 +1327,9 @@ public class Arena {
 		subject = getSubjectMenu().getHighestVote();
 		
 		//update bossbar
-		getBossBar().setTitle(MessageManager.translate(messages.getString("global.bossbar-header")
-				.replace("%subject%", getSubject())));
+
+        getBossBar().setTitle(MessageManager.translate(messages.getString("global.bossbar-header")
+				.replaceAll("%subject%", subject)));
 		
 		getUsedPlots().forEach(plot ->
 			plot.getGamePlayers().forEach(gamePlayer -> {
@@ -1409,6 +1417,7 @@ public class Arena {
 
                 player.setPlayerTime(player.getWorld().getFullTime(), true);
                 player.resetPlayerWeather();
+                this.leave(player, false);
             });
         });
 
@@ -1424,10 +1433,7 @@ public class Arena {
         subjectMenu = new SubjectMenu();
         SignManager.getInstance().updateJoinSigns(this);
 
-        if (matches == maxMatches)
-            stop();
-        else
-            postStart();
+
     }
 
     /**

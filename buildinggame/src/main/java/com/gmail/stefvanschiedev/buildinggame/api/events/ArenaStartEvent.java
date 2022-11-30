@@ -1,10 +1,9 @@
 package com.gmail.stefvanschiedev.buildinggame.api.events;
 
+import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
-
-import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 

@@ -1,14 +1,13 @@
 package com.gmail.stefvanschiedev.buildinggame.api;
 
-import java.util.List;
-
-import org.bukkit.entity.Player;
-
 import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * A class which is meant to be sued by APIs. It contains getters for important elements of this plugin such as arenas.

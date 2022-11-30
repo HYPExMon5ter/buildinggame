@@ -1,9 +1,8 @@
 package com.gmail.stefvanschiedev.buildinggame.timers;
 
+import com.gmail.stefvanschiedev.buildinggame.Main;
 import org.bukkit.Bukkit;
 import org.bukkit.scheduler.BukkitRunnable;
-
-import com.gmail.stefvanschiedev.buildinggame.Main;
 
 /**
  * Waits for other plugins to get loaded first. That way there are no incorrectly loaded worlds and other important

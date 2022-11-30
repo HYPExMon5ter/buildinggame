@@ -29,7 +29,7 @@ public class Leave implements Listener {
 		if (arena == null)
 			return;
 		
-		arena.leave(player);
+		arena.leave(player, true);
 	}
 
 	/**
@@ -47,6 +47,6 @@ public class Leave implements Listener {
 		if (arena == null)
 			return;
 		
-		arena.leave(player);
+		arena.leave(player, true);
 	}
 }

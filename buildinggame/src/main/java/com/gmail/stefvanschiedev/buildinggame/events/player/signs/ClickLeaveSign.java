@@ -61,7 +61,7 @@ public class ClickLeaveSign implements Listener {
                 return;
             }
 
-            arena.leave(player);
+            arena.leave(player, false);
             break;
         }
 	}

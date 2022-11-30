@@ -1,14 +1,5 @@
 package com.gmail.stefvanschiedev.buildinggame.timers;
 
-import com.gmail.stefvanschiedev.buildinggame.utils.*;
-import com.gmail.stefvanschiedev.buildinggame.utils.math.MathElement;
-import com.gmail.stefvanschiedev.buildinggame.utils.math.util.MathElementFactory;
-import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
-import org.bukkit.Bukkit;
-import org.bukkit.WeatherType;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
-
 import com.gmail.stefvanschiedev.buildinggame.Main;
 import com.gmail.stefvanschiedev.buildinggame.api.Win;
 import com.gmail.stefvanschiedev.buildinggame.api.events.PlayerWinEvent;
@@ -16,9 +7,17 @@ import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.softdependencies.SDVault;
 import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
+import com.gmail.stefvanschiedev.buildinggame.utils.*;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
+import com.gmail.stefvanschiedev.buildinggame.utils.math.MathElement;
+import com.gmail.stefvanschiedev.buildinggame.utils.math.util.MathElementFactory;
 import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
+import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
+import org.bukkit.Bukkit;
+import org.bukkit.WeatherType;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 

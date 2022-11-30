@@ -9,8 +9,13 @@ import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
-import com.gmail.stefvanschiedev.buildinggame.timers.*;
-import com.gmail.stefvanschiedev.buildinggame.utils.*;
+import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
+import com.gmail.stefvanschiedev.buildinggame.timers.FileCheckerTimer;
+import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
+import com.gmail.stefvanschiedev.buildinggame.utils.Booster;
+import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
+import com.gmail.stefvanschiedev.buildinggame.utils.TopStatHologram;
+import com.gmail.stefvanschiedev.buildinggame.utils.Vote;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
 import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
@@ -22,20 +27,17 @@ import com.gmail.stefvanschiedev.buildinggame.utils.item.ItemBuilder;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.datatype.PlotDataType;
 import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
-import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
-import com.gmail.stefvanschiedev.buildinggame.utils.region.RegionFactory;
 import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.event.block.Action;
-import org.bukkit.event.player.PlayerInteractEvent;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * This class handles all subcommands for the buildinggame command
@@ -209,7 +211,8 @@ public class CommandManager extends BaseCommand {
     @Description("Force an arena to start")
     @CommandPermission("bg.forcestart")
     @CommandCompletion("@arenas")
-    public void onForceStart(CommandSender sender, @Optional Arena arena) {
+    public void onForceStart(CommandSender sender, @Optional Arena arena, @Optional String theme) {
+        YamlConfiguration messages = SettingsManager.getInstance().getMessages();
         if (sender instanceof Player player) {
             var playerArena = ArenaManager.getInstance().getArena(player);
 
@@ -218,6 +221,11 @@ public class CommandManager extends BaseCommand {
                     playerArena.getState() != GameState.FULL) {
                     MessageManager.getInstance().send(sender, ChatColor.RED + "The arena is already in game");
                     return;
+                }
+                if (theme != null) {
+                    playerArena.getSubjectMenu().forceTheme(theme);
+                    messages.getStringList("commands.forcetheme.success").forEach(message ->
+                        MessageManager.getInstance().send(player, message.replace("%theme%", theme)));
                 }
                 playerArena.preStart();
                 MessageManager.getInstance().send(sender, ChatColor.GREEN + "Started arena");
@@ -241,6 +249,13 @@ public class CommandManager extends BaseCommand {
             MessageManager.getInstance().send(sender, ChatColor.RED + "The arena is already in game");
             return;
         }
+
+        if (theme != null) {
+            arena.getSubjectMenu().forceTheme(theme);
+            messages.getStringList("commands.forcetheme.success").forEach(message ->
+                MessageManager.getInstance().send(sender, message.replace("%theme%", theme)));
+        }
+
         arena.preStart();
         MessageManager.getInstance().send(sender, ChatColor.GREEN + "Started arena");
     }
@@ -358,7 +373,7 @@ public class CommandManager extends BaseCommand {
             return;
         }
 
-        arena.leave(player);
+        arena.leave(player, true);
     }
 
     /**

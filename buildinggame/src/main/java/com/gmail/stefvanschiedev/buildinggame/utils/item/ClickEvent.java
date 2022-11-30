@@ -244,7 +244,7 @@ public enum ClickEvent {
             return;
         }
 
-        arena.leave(event.getPlayer());
+        arena.leave(event.getPlayer(), false);
         event.setCancelled(true);
     }),
 
