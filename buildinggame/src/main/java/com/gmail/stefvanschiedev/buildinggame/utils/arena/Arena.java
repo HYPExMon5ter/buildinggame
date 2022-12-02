@@ -11,7 +11,6 @@ import com.gmail.stefvanschiedev.buildinggame.managers.arenas.SignManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.scoreboards.MainScoreboardManager;
 import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
@@ -29,7 +28,6 @@ import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialBlockPosition;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
 import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
-import com.gmail.stefvanschiedev.buildinggame.utils.scoreboards.*;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.boss.BarColor;
@@ -39,7 +37,6 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -111,26 +108,6 @@ public class Arena {
      * The plot which is currently being voted for
      */
 	private Plot votingPlot;
-
-	/**
-     * The build scoreboard
-     */
-	private final Map<Plot, ArenaScoreboard> buildScoreboards = new HashMap<>();
-
-	/**
-     * The lobby scoreboard
-     */
-	private final Map<Plot, ArenaScoreboard> lobbyScoreboards = new HashMap<>();
-
-	/**
-     * The vote scoreboard
-     */
-	private final Map<Plot, VoteScoreboard> voteScoreboards = new HashMap<>();
-
-	/**
-     * The win scoreboard
-     */
-	private final Map<Plot, ArenaScoreboard> winScoreboards = new HashMap<>();
 
 	/**
      * The subject
@@ -218,11 +195,6 @@ public class Arena {
      */
 	public void addPlot(Plot plot) {
 		plots.add(plot);
-
-		lobbyScoreboards.put(plot, new LobbyScoreboard(this));
-        buildScoreboards.put(plot, new BuildScoreboard(this));
-        voteScoreboards.put(plot, new VoteScoreboard(this));
-        winScoreboards.put(plot, new WinScoreboard(this));
 	}
 
 	/**
@@ -280,20 +252,6 @@ public class Arena {
 	}
 
 	/**
-     * Returns the build scoreboard for a specific plot
-     *
-     * @param plot the plot this build scoreboard belongs to
-     * @return the build scoreboard
-     * @see BuildScoreboard
-     * @since 5.9.0
-     */
-	@NotNull
-    @Contract(pure = true)
-	public ArenaScoreboard getBuildScoreboard(@NotNull Plot plot) {
-		return buildScoreboards.get(plot);
-	}
-
-	/**
      * Returns the plot that became first or null if voting isn't over yet
      *
      * @return the plot that became first
@@ -317,20 +275,6 @@ public class Arena {
 	public PotentialLocation getLobby() {
 	    return lobby;
     }
-
-	/**
-     * Returns the lobby scoreboard or null if it doesn't exist
-     *
-     * @param plot the plot this lobby scoreboard belongs to
-     * @return the lobby scoreboard
-     * @see LobbyScoreboard
-     * @since 2.3.0
-     */
-	@Nullable
-    @Contract(pure = true)
-	public ArenaScoreboard getLobbyScoreboard(@NotNull Plot plot) {
-		return lobbyScoreboards.get(plot);
-	}
 
 	/**
      * Returns the maximum amount of players
@@ -532,20 +476,6 @@ public class Arena {
 	}
 
 	/**
-     * Returns the vote scoreboard or null if it doesn't exist
-     *
-     * @param plot the plot this scoreboard is indexed by
-     * @return the vote scoreboard
-     * @see VoteScoreboard
-     * @since 5.9.0
-     */
-	@Nullable
-    @Contract(pure = true)
-	public VoteScoreboard getVoteScoreboard(@NotNull Plot plot) {
-		return voteScoreboards.get(plot);
-	}
-
-	/**
      * Returns the vote timer
      *
      * @return the vote timer
@@ -569,19 +499,6 @@ public class Arena {
     @Contract(pure = true)
 	public Plot getVotingPlot() {
 		return votingPlot;
-	}
-
-	/**
-     * Returns the win scoreboard or null if it doesn't exist
-     *
-     * @return the win scoreboard
-     * @see WinScoreboard
-     * @since 2.3.0
-     */
-	@Nullable
-    @Contract(pure = true)
-	public ArenaScoreboard getWinScoreboard(@NotNull Plot plot) {
-		return winScoreboards.get(plot);
 	}
 
     /**
@@ -698,27 +615,6 @@ public class Arena {
 				break;
 			}
 		}
-		
-		if (config.getBoolean("scoreboards.main.enable"))
-			MainScoreboardManager.getInstance().remove(player);
-
-        boolean enableLobbyScoreboard = config.getBoolean("scoreboards.lobby.enable");
-
-        if (enableLobbyScoreboard && (getState() == GameState.WAITING || getState() == GameState.STARTING)) {
-            getLobbyScoreboard(plot).show(player);
-        } else {
-            getBuildScoreboard(plot).show(player);
-        }
-
-        String name = player.getName();
-
-        //add player to red scoreboard of others
-        getPlots().stream().filter(pl -> !pl.getGamePlayers().contains(p)).forEach(pl -> {
-            getLobbyScoreboard(pl).getRedTeam().addEntry(name);
-            getBuildScoreboard(pl).getRedTeam().addEntry(name);
-            getVoteScoreboard(pl).getRedTeam().addEntry(name);
-            getWinScoreboard(pl).getRedTeam().addEntry(name);
-        });
 
         messages.getStringList("join.message").forEach(message ->
             MessageManager.getInstance().send(player, message
@@ -739,14 +635,6 @@ public class Arena {
             lobby.teleport(player);
         } else {
             plot.getLocation().teleport(player);
-        }
-
-		if (enableLobbyScoreboard && (getState() == GameState.WAITING || getState() == GameState.STARTING)) {
-            getUsedPlots().forEach(pl ->
-                pl.getGamePlayers().forEach(gamePlayer -> lobbyScoreboards.get(pl).show(gamePlayer.getPlayer())));
-        } else {
-            getUsedPlots().forEach(pl ->
-                pl.getGamePlayers().forEach(gamePlayer -> buildScoreboards.get(pl).show(gamePlayer.getPlayer())));
         }
 		
 		player.getInventory().clear();
@@ -833,7 +721,6 @@ public class Arena {
      */
 	public void leave(Player player, @Optional Boolean force) {
 	    YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
-		YamlConfiguration config = SettingsManager.getInstance().getConfig();
 		YamlConfiguration messages = SettingsManager.getInstance().getMessages();
 		
 		if (ArenaManager.getInstance().getArena(player) == null) {
@@ -859,25 +746,15 @@ public class Arena {
 		GamePlayer p = plot.getGamePlayer(player);
 		p.restore();
 
+
 		if (MainSpawnManager.getInstance().getMainSpawn() != null)
 			p.connect(MainSpawnManager.getInstance().getServer(), MainSpawnManager.getInstance().getMainSpawn());
-		
-		if (config.getBoolean("scoreboards.main.enable"))
-			MainScoreboardManager.getInstance().register(player);
 		
 		player.resetPlayerTime();
 		player.resetPlayerWeather();
 		
 		//show all players again
 		Bukkit.getOnlinePlayers().forEach(pl -> player.showPlayer(Main.getInstance(), pl));
-
-        //reset player display name of removed player
-        getPlots().forEach(pl -> {
-            getLobbyScoreboard(pl).getRedTeam().removeEntry(player.getName());
-            getBuildScoreboard(pl).getRedTeam().removeEntry(player.getName());
-            getVoteScoreboard(pl).getRedTeam().removeEntry(player.getName());
-            getWinScoreboard(pl).getRedTeam().removeEntry(player.getName());
-        });
 
 		getUsedPlots().forEach(usedPlot -> {
 			for (GamePlayer gamePlayer : usedPlot.getGamePlayers()) {
@@ -912,9 +789,6 @@ public class Arena {
                     messages.getStringList("leave.other-players.in-game").forEach(message ->
                         MessageManager.getInstance().send(pl, message
                             .replace("%player%", player.getName())));
-
-                if (config.getBoolean("scoreboards.lobby.enable"))
-                    getLobbyScoreboard(usedPlot).show(pl);
             })
         );
 
@@ -1153,10 +1027,6 @@ public class Arena {
 
 				//give blocks
 				player.getInventory().clear();
-
-				//update scoreboard and update time and weather
-				if (config.getBoolean("scoreboards.vote.enable"))
-					getVoteScoreboard(plot).show(player);
 				
 				player.setPlayerTime(plot.getTime(), false);
 				player.setPlayerWeather(plot.isRaining() ? WeatherType.DOWNFALL : WeatherType.CLEAR);
@@ -1322,17 +1192,10 @@ public class Arena {
             voteTimer.cancel();
         }
 
-        /*getBossBar().setTitle(MessageManager.translate(messages.getString("global.bossbar-header")
-            .replace("%subject%", "?")));
-        getBossBar().setVisible(false);
-
-        getBossBar().getPlayers().forEach(player -> getBossBar().removePlayer(player));*/
-
         setState(GameState.WAITING);
         this.buildTimer = new BuildTimer(arenas.getInt(name + ".timer"), this);
         this.voteTimer = new VoteTimer(arenas.getInt(name + ".vote-timer"), this);
 
-        voteScoreboards.replaceAll((plot, voteScoreboard) -> new VoteScoreboard(this));
         subject = null;
 
         setFirstPlot(null);

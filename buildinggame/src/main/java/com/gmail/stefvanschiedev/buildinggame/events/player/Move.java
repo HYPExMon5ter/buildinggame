@@ -1,10 +1,12 @@
 package com.gmail.stefvanschiedev.buildinggame.events.player;
 
-import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
-
-import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
+import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
+import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
 import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
+import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
@@ -13,14 +15,11 @@ import org.bukkit.entity.Entity;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
-
-import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
+import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * Handles player movement in-game

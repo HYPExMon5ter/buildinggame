@@ -261,12 +261,6 @@ public class Plot {
 			getVotes().remove(getVote(sender));
 
 		votes.add(vote);
-		
-		if (!config.getBoolean("names-after-voting") && config.getBoolean("scoreboards.vote.enable"))
-		    arena.getPlots().stream()
-                .filter(p -> !p.getGamePlayers().isEmpty())
-                .flatMap(p -> getGamePlayers().stream())
-                .forEach(player -> arena.getVoteScoreboard(this).show(player.getPlayer()));
 
 		//point actions
         var configurationSection = config.getConfigurationSection("voting.point-actions");
@@ -611,11 +605,6 @@ public class Plot {
                     MessageManager.getInstance().send(gamePlayer.getPlayer(), s
                         .replace("%plot%", getId() + "")));
 
-                arena.getLobbyScoreboard(this).getGreenTeam().addEntry(name);
-                arena.getBuildScoreboard(this).getGreenTeam().addEntry(name);
-                arena.getVoteScoreboard(this).getGreenTeam().addEntry(name);
-                arena.getWinScoreboard(this).getGreenTeam().addEntry(name);
-
 				return true;
 			} else {
 				MessageManager.getInstance().send(gamePlayer.getPlayer(), MessageManager.translate(messages
@@ -631,11 +620,6 @@ public class Plot {
             MessageManager.translate(messages.getStringList("join.plot.message")).forEach(s ->
                 MessageManager.getInstance().send(gamePlayer.getPlayer(), s
                     .replace("%plot%", getId() + "")));
-
-            arena.getLobbyScoreboard(this).getGreenTeam().addEntry(name);
-            arena.getBuildScoreboard(this).getGreenTeam().addEntry(name);
-            arena.getVoteScoreboard(this).getGreenTeam().addEntry(name);
-            arena.getWinScoreboard(this).getGreenTeam().addEntry(name);
 
 			return true;
 		}
@@ -675,9 +659,6 @@ public class Plot {
      * @since 2.1.0
      */
 	public void restore() {
-		if (!SettingsManager.getInstance().getConfig().getBoolean("restore-plots"))
-			return;
-		
 		blocks.forEach((blockState, biome) -> {
             Block block = blockState.getLocation().getBlock();
 

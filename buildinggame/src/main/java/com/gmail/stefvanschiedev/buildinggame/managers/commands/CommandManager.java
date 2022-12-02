@@ -910,64 +910,14 @@ public class CommandManager extends BaseCommand {
     @Subcommand("spectate")
     @Description("Spectate a player")
     @CommandPermission("bg.spectate")
-    public void onSpectate(Player player, @Flags("other") Player toSpectate) {
-        var arena = ArenaManager.getInstance().getArena(toSpectate);
-
-        if (arena == null) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "Arena not found");
+    public void onSpectate(Player player) {
+        if (VoteTimer.spectators.contains(player)) {
+            MessageManager.getInstance().send(player, ChatColor.RED + "You're not spectating the game anymore");
+            VoteTimer.spectators.remove(player);
             return;
         }
-
-        if (arena.getState() != GameState.BUILDING) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "You can't spectate right now");
-            return;
-        }
-
-        GamePlayer toSpectateGamePlayer = arena.getUsedPlots().stream()
-            .flatMap(plot -> plot.getAllGamePlayers().stream())
-            .filter(gamePlayer -> gamePlayer.getPlayer().equals(toSpectate))
-            .findAny()
-            .orElse(null);
-
-        if (toSpectateGamePlayer == null) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "Couldn't find the player to spectate");
-            return;
-        }
-
-        if (toSpectateGamePlayer.getGamePlayerType() == GamePlayerType.SPECTATOR) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "You can't spectate a spectator");
-            return;
-        }
-
-        //check if the player is playing the game
-        if (ArenaManager.getInstance().getArena(player) != null &&
-            ArenaManager.getInstance().getArena(player).getPlot(player).getGamePlayer(player)
-                .getGamePlayerType() == GamePlayerType.PLAYER) {
-            MessageManager.getInstance().send(player,
-                ChatColor.RED + "You can't spectate while you're in game");
-            return;
-        }
-
-        //check if we are already spectating
-        Plot spectating = null;
-        for (Arena a : ArenaManager.getInstance().getArenas()) {
-            for (Plot plot : a.getUsedPlots()) {
-                for (GamePlayer gamePlayer : plot.getSpectators()) {
-                    if (gamePlayer.getPlayer().equals(player)) {
-                        spectating = plot;
-                        break;
-                    }
-                }
-            }
-        }
-
-        if (spectating != null)
-            spectating.removeSpectator(spectating.getGamePlayer(player));
-
-        arena.getPlot(toSpectateGamePlayer.getPlayer()).addSpectator(player, toSpectateGamePlayer);
-
-        MessageManager.getInstance().send(player, ChatColor.GREEN + "Now spectating " +
-            toSpectateGamePlayer.getPlayer().getName() + '!');
+        MessageManager.getInstance().send(player, ChatColor.GREEN + "You're now spectating the game");
+        VoteTimer.spectators.add(player);
     }
 
     /**

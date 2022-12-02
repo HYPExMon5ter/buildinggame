@@ -18,8 +18,6 @@ import com.gmail.stefvanschiedev.buildinggame.events.player.signs.ClickJoinSign;
 import com.gmail.stefvanschiedev.buildinggame.events.player.signs.ClickLeaveSign;
 import com.gmail.stefvanschiedev.buildinggame.events.player.signs.ClickSpectateSign;
 import com.gmail.stefvanschiedev.buildinggame.events.player.voting.Interact;
-import com.gmail.stefvanschiedev.buildinggame.events.scoreboards.MainScoreboardJoinShow;
-import com.gmail.stefvanschiedev.buildinggame.events.scoreboards.MainScoreboardWorldChange;
 import com.gmail.stefvanschiedev.buildinggame.events.softdependencies.NPCCreate;
 import com.gmail.stefvanschiedev.buildinggame.events.softdependencies.WorldEditBoundaryAssertion;
 import com.gmail.stefvanschiedev.buildinggame.events.structure.TreeGrow;
@@ -36,7 +34,6 @@ import com.gmail.stefvanschiedev.buildinggame.managers.softdependencies.SDVault;
 import com.gmail.stefvanschiedev.buildinggame.timers.EntityTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.LoadCooldown;
 import com.gmail.stefvanschiedev.buildinggame.timers.ParticleRender;
-import com.gmail.stefvanschiedev.buildinggame.timers.ScoreboardUpdater;
 import com.gmail.stefvanschiedev.buildinggame.utils.NPCFloorChangeTrait;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
@@ -294,10 +291,6 @@ public class Main extends JavaPlugin {
             pm.registerEvents(new EntityOptionsMenu(), this);
             pm.registerEvents(new EntitySpawn(), this);
 
-            //scoreboards
-            pm.registerEvents(new MainScoreboardJoinShow(), this);
-            pm.registerEvents(new MainScoreboardWorldChange(), this);
-
             //structure
             pm.registerEvents(new TreeGrow(), this);
         }
@@ -307,8 +300,6 @@ public class Main extends JavaPlugin {
 
         getLogger().info("Loading timer");
         new ParticleRender().runTaskTimer(this, 0L, 10L);
-        new ScoreboardUpdater().runTaskTimer(this, 0L, SettingsManager.getInstance().getConfig()
-            .getLong("scoreboard-update-delay"));
         new EntityTimer().runTaskTimer(this, 0L, 20L);
 
         long end = System.currentTimeMillis();

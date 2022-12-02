@@ -1,28 +1,21 @@
 package com.gmail.stefvanschiedev.buildinggame.timers;
 
-import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
+import com.gmail.stefvanschiedev.buildinggame.Main;
 import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.gmail.stefvanschiedev.buildinggame.timers.utils.Timer;
 import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
-import com.gmail.stefvanschiedev.buildinggame.utils.Vote;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
 import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
 import org.bukkit.Bukkit;
 import org.bukkit.WeatherType;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
 
 /**
  * This handles the voting time for this arena
@@ -45,6 +38,11 @@ public class VoteTimer extends Timer {
      * The list of players plots we haven't seen
      */
     private ArrayList<Player> plotsVisited;
+
+    /**
+     * The list of players spectating
+     */
+    public static ArrayList<Player> spectators = new ArrayList<Player>();
 
     /**
      * The player of the plot we're visiting
@@ -84,8 +82,21 @@ public class VoteTimer extends Timer {
     public void run() {
         running = true;
 
-        //Grabs a plot to teleport to
+        //Code to run when voting first starts
         if (plotsVisited == null || plotsVisited.isEmpty()) {
+
+            if (!VoteTimer.spectators.isEmpty()) {
+                for (Player spectator : spectators) {
+                    plot.getAllGamePlayers().forEach(pl ->
+                        spectator.hidePlayer(Main.getInstance(), pl.getPlayer()));
+                }
+            }
+
+            for (Player player : Bukkit.getOnlinePlayers()) {
+                if (player.hasPermission("bg.info")) {
+                    MessageManager.getInstance().send(player, "Voting has begun, /bg winner <player> to set winner.");
+                }
+            }
             plotsVisited = new ArrayList<Player>();
             arena.getUsedPlots().forEach(plot -> plot.getAllGamePlayers().forEach(gamePlayer -> {
                 var player = gamePlayer.getPlayer();
@@ -110,11 +121,6 @@ public class VoteTimer extends Timer {
 
             arena.getUsedPlots().forEach(plot -> plot.getAllGamePlayers().forEach(gamePlayer -> {
                 var player = gamePlayer.getPlayer();
-
-                if (!config.getBoolean("names-after-voting") &&
-                    config.getBoolean("scoreboards.vote.enable")) {
-                    arena.getVoteScoreboard(plot).show(player);
-                }
 
                 player.setPlayerTime(this.plot.getTime(), false);
                 player.setPlayerWeather(this.plot.isRaining() ? WeatherType.DOWNFALL : WeatherType.CLEAR);
@@ -158,11 +164,16 @@ public class VoteTimer extends Timer {
                     plot.getArena().getLobby().teleport(pl);
                 });
 
+                if (!VoteTimer.spectators.isEmpty()) {
+                    for (Player spectator : spectators) {
+                        plot.getAllGamePlayers().forEach(pl ->
+                            spectator.showPlayer(Main.getInstance(), pl.getPlayer()));
+                    }
+                }
                 return;
             }
             seconds = originalSeconds;
         }
-
         seconds--;
     }
 }
