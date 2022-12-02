@@ -8,13 +8,11 @@ import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
 import com.gmail.stefvanschiedev.buildinggame.timers.BuildTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.FileCheckerTimer;
 import com.gmail.stefvanschiedev.buildinggame.timers.VoteTimer;
 import com.gmail.stefvanschiedev.buildinggame.utils.Booster;
 import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
-import com.gmail.stefvanschiedev.buildinggame.utils.TopStatHologram;
 import com.gmail.stefvanschiedev.buildinggame.utils.Vote;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
@@ -27,7 +25,6 @@ import com.gmail.stefvanschiedev.buildinggame.utils.item.ItemBuilder;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.datatype.PlotDataType;
 import com.gmail.stefvanschiedev.buildinggame.utils.plot.Plot;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -177,29 +174,24 @@ public class CommandManager extends BaseCommand {
     }
 
     /**
-     * Called whenever a command sender wants to enable or disable money in a given arena
-     *
-     * @param sender the command sender
-     * @param arena the arena
-     * @param enableMoney whether money should be enabled
-     * @since 5.8.0
+     * Called when debugging
      */
-    @Subcommand("enablemoney")
-    @Description("Enable or disable money for an arena")
-    @CommandPermission("bg.enablemoney")
-    @CommandCompletion("@arenas true|false")
-    public void onEnableMoney(CommandSender sender, Arena arena, boolean enableMoney) {
-        YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
+/*    @Subcommand("debug")
+    @Description("Debugging")
+    @CommandPermission("bg.debug")
+    @CommandCompletion("@nothing")
+    public void onDebug(Player player) {
+        YamlConfiguration messages = SettingsManager.getInstance().getMessages();
 
-        arenas.set(arena.getName() + ".enable-money", enableMoney);
+            var arena = ArenaManager.getInstance().getArena(player);
 
-        arena.setMoneyEnabled(enableMoney);
+            if (arena != null) {
+                MessageManager.getInstance().send(player, ChatColor.RED + arena);
+            } else {
+                MessageManager.getInstance().send(player, ChatColor.RED + "Not in an arena");
+            }
 
-        SettingsManager.getInstance().save();
-
-        MessageManager.getInstance().send(sender, ChatColor.GREEN + (enableMoney ? "Enabled" : "Disabled") +
-            " money for " + arena.getName());
-    }
+    }*/
 
     /**
      * Called whenever a command sender wants to start an arena
@@ -210,7 +202,7 @@ public class CommandManager extends BaseCommand {
     @Subcommand("forcestart")
     @Description("Force an arena to start")
     @CommandPermission("bg.forcestart")
-    @CommandCompletion("@arenas")
+    @CommandCompletion("@arenas @nothing")
     public void onForceStart(CommandSender sender, @Optional Arena arena, @Optional String theme) {
         YamlConfiguration messages = SettingsManager.getInstance().getMessages();
         if (sender instanceof Player player) {
@@ -306,9 +298,9 @@ public class CommandManager extends BaseCommand {
      * @since 5.8.0
      */
     @Subcommand("forcetheme")
-    @Description("Force a them to be chosen")
+    @Description("Force a theme to be chosen")
     @CommandPermission("bg.forcetheme")
-    @CommandCompletion("@arenas @nothing")
+    @CommandCompletion("@nothing")
     public void onForceTheme(Player player, String theme) {
         YamlConfiguration messages = SettingsManager.getInstance().getMessages();
 
@@ -323,6 +315,45 @@ public class CommandManager extends BaseCommand {
 
         messages.getStringList("commands.forcetheme.success").forEach(message ->
             MessageManager.getInstance().send(player, message.replace("%theme%", theme)));
+    }
+
+    /**
+     * Called whenever a players wants to specify a winner
+     *
+     * @param player the player sending the command
+     * @param winner the winner
+     * @since 12.0.1
+     */
+    @Subcommand("winner")
+    @Description("Force a winner to be chosen")
+    @CommandPermission("bg.winner")
+    @CommandCompletion("@players")
+    public void onWinner(Player player, Player winner) {
+        //YamlConfiguration messages = SettingsManager.getInstance().getMessages();
+
+        var playerArena = ArenaManager.getInstance().getArena(player);
+
+        if (playerArena != null) {
+            if (playerArena.getState() == GameState.BUILDING) {
+                MessageManager.getInstance().send(player, ChatColor.RED + "You can't set a winner yet");
+                return;
+            }
+            if (winner == null) {
+                MessageManager.getInstance().send(player, ChatColor.RED + "Please specify a winner");
+                return;
+            }
+            //playerArena.leave(player, false);
+            playerArena.getUsedPlots().stream().flatMap(plot -> plot.getGamePlayers().stream()).forEach(arenaPlayer -> {
+                if (arenaPlayer.getPlayer() != winner) {
+                    arenaPlayer.addTitleAndSubtitle("The winner is", winner.getName());
+                } else {
+                    arenaPlayer.addTitleAndSubtitle("Congrats!", "You won!");
+                }
+            });
+
+            playerArena.nextMatch();
+            //playerArena.nextMatch();
+        }
     }
 
     /**
@@ -402,13 +433,6 @@ public class CommandManager extends BaseCommand {
     @CommandPermission("bg.reload")
     public void onReload(CommandSender sender) {
         ArenaManager.getInstance().getArenas().stream().filter(arena -> arena.getPlayers() > 0).forEach(Arena::stop);
-
-        StatManager instance = StatManager.getInstance();
-
-        if (instance.getMySQLDatabase() == null)
-            instance.saveToFile();
-        else
-            instance.saveToDatabase();
 
         FileCheckerTimer runnable = SettingsManager.getInstance().getRunnable();
 
@@ -947,62 +971,17 @@ public class CommandManager extends BaseCommand {
     }
 
     /**
-     * Called whenever a player wants to view his/her statistics
-     *
-     * @param player the player
-     * @since 5.8.0
-     */
-    @Subcommand("stats")
-    @Description("Show your stats")
-    @CommandPermission("bg.stats")
-    public void onStats(Player player) {
-        YamlConfiguration messages = SettingsManager.getInstance().getMessages();
-
-        StatManager statManager = StatManager.getInstance();
-
-        var playsStat = statManager.getStat(player, StatType.PLAYS);
-        var firstStat = statManager.getStat(player, StatType.FIRST);
-        var secondStat = statManager.getStat(player, StatType.SECOND);
-        var thirdStat = statManager.getStat(player, StatType.THIRD);
-        var placedStat = statManager.getStat(player, StatType.PLACED);
-        var brokenStat = statManager.getStat(player, StatType.BROKEN);
-        var walkedStat = statManager.getStat(player, StatType.WALKED);
-        var pointsGivenStat = statManager.getStat(player, StatType.POINTS_GIVEN);
-        var pointsReceivedStat = statManager.getStat(player, StatType.POINTS_RECEIVED);
-
-        MessageManager.translate(messages.getStringList("commands.stats.success")).forEach(message ->
-            MessageManager.getInstance().send(player, message
-                .replace("%stat_plays%", playsStat == null ? "0" : String.valueOf(playsStat.getValue()))
-                .replace("%stat_first%", firstStat == null ? "0" : String.valueOf(firstStat.getValue()))
-                .replace("%stat_second%", secondStat == null ? "0" : String.valueOf(secondStat.getValue()))
-                .replace("%stat_third%", thirdStat == null ? "0" : String.valueOf(thirdStat.getValue()))
-                .replace("%stat_placed%", placedStat == null ? "0" : String.valueOf(placedStat.getValue()))
-                .replace("%stat_broken%", brokenStat == null ? "0" : String.valueOf(brokenStat.getValue()))
-                .replace("%stat_walked%", walkedStat == null ? "0" : String.valueOf(walkedStat.getValue()))
-                .replace("%stat_points_given%", pointsGivenStat == null ? "0" :
-                    String.valueOf(pointsGivenStat.getValue()))
-                .replace("%stat_points_received%", pointsReceivedStat == null ? "0" :
-                    String.valueOf(pointsReceivedStat.getValue()))));
-    }
-
-    /**
      * Called whenever a player wants to vote on a plot
      *
      * @param player the player
-     * @param points the amount of points to award
      * @since 5.8.0
      */
     @Subcommand("vote")
     @Description("Vote on someone's plot")
     @CommandPermission("bg.vote")
     @CommandCompletion("@range:1-10")
-    public void onVote(Player player, int points) {
+    public void onVote(Player player) {
         YamlConfiguration messages = SettingsManager.getInstance().getMessages();
-
-        if (points < 1 || points > 10) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "Points can only be between 1 and 10");
-            return;
-        }
 
         var arena = ArenaManager.getInstance().getArena(player);
 
@@ -1011,87 +990,19 @@ public class CommandManager extends BaseCommand {
             return;
         }
 
-        if (arena.getPlot(player).getGamePlayer(player).getGamePlayerType() == GamePlayerType.SPECTATOR) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "Spectators can't vote");
-            return;
-        }
-
         if (arena.getState() != GameState.VOTING) {
-            MessageManager.getInstance().send(player, ChatColor.RED + "You can't vote at this moment");
+            MessageManager.getInstance().send(player, ChatColor.RED + "We aren't in the voting stage yet");
             return;
         }
 
         var plot = arena.getVotingPlot();
-        plot.addVote(new Vote(points, player));
+        plot.addVote(new Vote(player));
 
         MessageManager.getInstance().send(player, messages.getString("vote.message")
-            .replace("%playerplot%", plot.getPlayerFormat())
-            .replace("%points%", points + ""));
+            .replace("%playerplot%", plot.getPlayerFormat()));
     }
 
-    /**
-     * Contains methods for commands regarding holograms
-     *
-     * @since 6.2.0
-     */
-    @SuppressWarnings("InnerClassMayBeStatic") //acf doesn't like it when we make this static
-    @Subcommand("hologram")
-    public class HologramCommand extends BaseCommand {
 
-        /**
-         * Creates and registers a new hologram at the position of the player
-         *
-         * @param player the player who executed the command
-         * @param name the name of the hologram to create
-         * @param type the type of statistic to track
-         * @param values the amount of values to display on the hologram
-         * @since 6.2.0
-         */
-        @Subcommand("create")
-        @Description("Create a new top statistics hologram")
-        @CommandPermission("bg.hologram.create")
-        @CommandCompletion("@nothing @stattypes @nothing")
-        @Conditions("hdenabled")
-        public void onCreate(Player player, String name, StatType type, int values) {
-            if (TopStatHologram.getHolograms().stream()
-                .anyMatch(hologram -> hologram.getName().equalsIgnoreCase(name))) {
-                player.sendMessage(ChatColor.RED + "A hologram with the name '" + name + "' already exists.");
-                return;
-            }
-
-            new TopStatHologram(name, type, values, player.getLocation()).register();
-            SettingsManager.getInstance().save();
-            player.sendMessage(ChatColor.GREEN + "A hologram named '" + name + "' has been created.");
-        }
-
-        /**
-         * Deletes an already existing hologram
-         *
-         * @param sender the sender which executed the command
-         * @param name the name of the hologram to delete
-         * @since 6.2.0
-         */
-        @Subcommand("delete")
-        @Description("Delete a top statistics hologram")
-        @CommandPermission("bg.hologram.delete")
-        @CommandCompletion("@holograms")
-        @Conditions("hdenabled")
-        public void onDelete(CommandSender sender, String name) {
-            TopStatHologram hologram = TopStatHologram.getHolograms().stream()
-                .filter(h -> h.getName().equalsIgnoreCase(name))
-                .findAny()
-                .orElse(null);
-
-            if (hologram == null) {
-                sender.sendMessage(ChatColor.RED + "No hologram with the name '" + name + "' exists.");
-                return;
-            }
-
-            hologram.delete();
-            SettingsManager.getInstance().save();
-            sender.sendMessage(ChatColor.GREEN + "The hologram named '" + name + "' has been deleted.");
-        }
-    }
 
     /**
      * Shows an automatically generated help display to the sender

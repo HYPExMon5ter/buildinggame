@@ -4,7 +4,6 @@ import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.gmail.stefvanschiedev.buildinggame.utils.Report;
-import com.gmail.stefvanschiedev.buildinggame.utils.Vote;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
 import com.gmail.stefvanschiedev.buildinggame.utils.guis.spectatormenu.SpectatorMenu;
@@ -23,7 +22,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.io.File;
 import java.time.LocalDateTime;
@@ -350,29 +348,6 @@ public enum ClickEvent {
         }
 
         arena.getTeamSelection().show(event.getPlayer());
-        event.setCancelled(true);
-    }),
-
-    /**
-     * The event for a player clicking on a vote item to vote on a plot.
-     *
-     * @since 11.0.1
-     */
-    VOTE_CLICK((event, contextBag) -> {
-        Arena arena = contextBag.getContext("arena", ArenaDataType.getInstance());
-
-        if (arena == null) {
-            return;
-        }
-
-        //due to boxing, this may be null; to properly check for this, we don't unbox it, so we can perform a null check
-        Integer points = contextBag.getContext("points", PersistentDataType.INTEGER);
-
-        if (points == null) {
-            return;
-        }
-
-        arena.getVotingPlot().addVote(new Vote(points, event.getPlayer()));
         event.setCancelled(true);
     });
 

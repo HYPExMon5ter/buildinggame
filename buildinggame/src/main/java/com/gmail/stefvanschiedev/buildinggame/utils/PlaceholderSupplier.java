@@ -2,15 +2,11 @@ package com.gmail.stefvanschiedev.buildinggame.utils;
 
 import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.Stat;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.util.HashMap;
-import java.util.Locale;
 import java.util.Map;
 import java.util.function.BiFunction;
 
@@ -96,23 +92,5 @@ public final class PlaceholderSupplier {
                 .replace(commaIndex, commaIndex + 2, " and ")
                 .toString();
         });
-
-        for (var statType : StatType.values()) {
-            var name = statType.toString().toLowerCase(Locale.getDefault());
-
-            PLACEHOLDER_REPLACEMENTS.put("buildinggame_stat_" + name, (offlinePlayer, placeholder) -> {
-                Stat stat = StatManager.getInstance().getStat(offlinePlayer, statType);
-
-                return stat == null ? "0" : String.valueOf(stat.getValue());
-            });
-            PLACEHOLDER_REPLACEMENTS.put("buildinggame_stat_" + name + "_top", (offlinePlayer, placeholder) -> {
-                var stats = StatManager.getInstance().getStats(statType);
-
-                if (stats == null)
-                    return "-1";
-
-                return String.valueOf(stats.get(0).getValue());
-            });
-        }
     }
 }

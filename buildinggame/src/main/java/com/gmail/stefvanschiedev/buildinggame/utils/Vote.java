@@ -12,11 +12,6 @@ import org.jetbrains.annotations.NotNull;
 public class Vote {
 
     /**
-     * The points given with this vote
-     */
-	private final int points;
-
-    /**
      * The player who gave the vote
      */
 	private final Player sender;
@@ -24,23 +19,10 @@ public class Vote {
     /**
      * Constructs a new vote
      *
-     * @param points the amount of points given with this vote
      * @param sender the player who gave the vote
      */
-	public Vote(int points, Player sender) {
-		this.points = points;
+	public Vote(Player sender) {
 		this.sender = sender;
-	}
-
-    /**
-     * Returns the amount of points given with this vote
-     *
-     * @return the amount of points
-     * @since 2.1.0
-     */
-    @Contract(pure = true)
-	public int getPoints() {
-		return points;
 	}
 
     /**

@@ -1,16 +1,23 @@
 package com.gmail.stefvanschiedev.buildinggame.utils.plot;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
-import com.gmail.stefvanschiedev.buildinggame.utils.*;
+import com.gmail.stefvanschiedev.buildinggame.Main;
+import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
+import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
+import com.gmail.stefvanschiedev.buildinggame.utils.Target;
+import com.gmail.stefvanschiedev.buildinggame.utils.Vote;
+import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
+import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
+import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
+import com.gmail.stefvanschiedev.buildinggame.utils.guis.buildmenu.BuildMenu;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.ClickEvent;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.ItemBuilder;
 import com.gmail.stefvanschiedev.buildinggame.utils.item.datatype.PlotDataType;
+import com.gmail.stefvanschiedev.buildinggame.utils.particle.Particle;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
 import com.gmail.stefvanschiedev.buildinggame.utils.region.Region;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import org.bukkit.*;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
@@ -20,22 +27,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
-
-import com.gmail.stefvanschiedev.buildinggame.Main;
-import com.gmail.stefvanschiedev.buildinggame.managers.arenas.ArenaManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.mainspawn.MainSpawnManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
-import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayer;
-import com.gmail.stefvanschiedev.buildinggame.utils.gameplayer.GamePlayerType;
-import com.gmail.stefvanschiedev.buildinggame.utils.guis.buildmenu.BuildMenu;
-import com.gmail.stefvanschiedev.buildinggame.utils.guis.spectatormenu.SpectatorMenu;
-import com.gmail.stefvanschiedev.buildinggame.utils.particle.Particle;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * A plot representing the building area for one team of players
@@ -243,13 +240,11 @@ public class Plot {
 
         messages.getStringList("vote.message").forEach(message ->
             MessageManager.getInstance().send(sender, message
-                .replace("%playerplot%", arena.getVotingPlot().getPlayerFormat())
-                .replace("%points%", vote.getPoints() + "")));
+                .replace("%playerplot%", arena.getVotingPlot().getPlayerFormat())));
 
         messages.getStringList("vote.receiver").forEach(message ->
 			arena.getVotingPlot().getGamePlayers().forEach(player ->
                 MessageManager.getInstance().send(player.getPlayer(), message
-                    .replace("%points%", vote.getPoints() + "")
                     .replace("%sender%", sender.getName()))
 			)
 		);
@@ -258,22 +253,14 @@ public class Plot {
 
 		if (senderArena != null)
             senderArena.getPlot(sender).getGamePlayers().forEach(player -> {
-                player.addTitleAndSubtitle(messages.getString("vote.title")
-                    .replace("%points%", vote.getPoints() + ""), messages.getString("vote.subtitle")
-                    .replace("%points%", vote.getPoints() + ""));
-                player.sendActionbar(messages.getString("vote.actionbar")
-                    .replace("%points%", String.valueOf(vote.getPoints())));
+                player.addTitleAndSubtitle(messages.getString("vote.title"), messages.getString("vote.subtitle"));
+                player.sendActionbar(messages.getString("vote.actionbar"));
             });
-
-        int previousPoints = getPoints();
 
 		if (hasVoted(sender))
 			getVotes().remove(getVote(sender));
 
 		votes.add(vote);
-		
-		if (!config.getBoolean("scoreboards.vote.text"))
-			arena.getVoteScoreboard(this).setScore(getPlayerFormat(), getPoints());
 		
 		if (!config.getBoolean("names-after-voting") && config.getBoolean("scoreboards.vote.enable"))
 		    arena.getPlots().stream()
@@ -297,11 +284,6 @@ public class Plot {
 		        return;
             }
 
-            //ensure the amount of points is higher and that this is the first time we get this (e.g. the added amount
-            //of points made the amount go over the minimum, it shouldn't already have been higher than the minimum)
-            if (getPoints() < points || previousPoints >= points)
-                return;
-
             configurationSection.getStringList(key).forEach(command -> {
                 if (!command.isEmpty() && command.charAt(0) == '@') {
                     String targetText = command.split(" ")[0];
@@ -311,22 +293,6 @@ public class Plot {
                     getGamePlayers().forEach(gamePlayer -> Bukkit.dispatchCommand(gamePlayer.getPlayer(), command));
             });
         });
-
-        //track stats
-        var statManager = StatManager.getInstance();
-
-        getGamePlayers().forEach(gamePlayer -> {
-            var player = gamePlayer.getPlayer();
-            var stat = statManager.getStat(player, StatType.POINTS_RECEIVED);
-
-            statManager.registerStat(player, StatType.POINTS_RECEIVED,
-                    (stat == null ? 0 : stat.getValue()) + vote.getPoints());
-        });
-
-        var stat = statManager.getStat(sender, StatType.POINTS_GIVEN);
-
-        statManager.registerStat(sender, StatType.POINTS_GIVEN,
-                (stat == null ? 0 : stat.getValue()) + vote.getPoints());
 	}
 
 	/**
@@ -513,17 +479,6 @@ public class Plot {
 		}
 		
 		return players.toString();
-	}
-
-	/**
-     * Returns the amount of points this plot got by votes
-     *
-     * @return the voting points
-     * @since 2.1.0
-     */
-	@Contract(pure = true)
-	public int getPoints() {
-	    return votes.stream().mapToInt(Vote::getPoints).sum();
 	}
 
 	/**

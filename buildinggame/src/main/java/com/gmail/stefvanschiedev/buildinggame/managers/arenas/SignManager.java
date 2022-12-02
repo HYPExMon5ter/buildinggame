@@ -1,28 +1,28 @@
 package com.gmail.stefvanschiedev.buildinggame.managers.arenas;
 
-import java.util.*;
-
-import com.gmail.stefvanschiedev.buildinggame.utils.ChunkCoordinates;
-import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
-import com.gmail.stefvanschiedev.buildinggame.utils.SpectateSign;
-import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialBlockPosition;
-import com.gmail.stefvanschiedev.buildinggame.utils.bungeecord.BungeeCordHandler;
-import org.bukkit.*;
-import org.bukkit.block.Block;
-import org.bukkit.block.Sign;
-import org.bukkit.configuration.file.YamlConfiguration;
-
 import com.gmail.stefvanschiedev.buildinggame.Main;
 import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
+import com.gmail.stefvanschiedev.buildinggame.utils.ChunkCoordinates;
+import com.gmail.stefvanschiedev.buildinggame.utils.GameState;
+import com.gmail.stefvanschiedev.buildinggame.utils.SpectateSign;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatSign;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
+import com.gmail.stefvanschiedev.buildinggame.utils.bungeecord.BungeeCordHandler;
+import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialBlockPosition;
+import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
+import org.bukkit.DyeColor;
+import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.material.Attachable;
 import org.bukkit.material.MaterialData;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
 
 /**
  * This class handles all join, leave and statistic signs
@@ -67,12 +67,6 @@ public final class SignManager {
     @NotNull
 	private final Map<ChunkCoordinates, Collection<PotentialBlockPosition>> leaveSigns = new HashMap<>();
 
-	/**
-     * A collection of all statistic signs
-     */
-    @NotNull
-	private final Collection<StatSign> statSigns = new HashSet<>();
-
     /**
      * A map of all spectate signs
      */
@@ -94,7 +88,6 @@ public final class SignManager {
 
 		randomJoinSigns.clear();
 		leaveSigns.clear();
-		statSigns.clear();
 		spectateSigns.clear();
 		
 		for (var string : signs.getKeys(false)) {
@@ -130,13 +123,6 @@ public final class SignManager {
 
                     if (config.getBoolean("debug"))
                         Main.getInstance().getLogger().info("Found leave sign");
-                    break;
-                case "stat":
-                    statSigns.add(new StatSign(blockPos, StatType.valueOf(signs.getString(string + ".stat")),
-                            Integer.parseInt(signs.getString(string + ".number"))));
-
-                    if (config.getBoolean("debug"))
-                        Main.getInstance().getLogger().info("Found stat sign");
                     break;
                 case "spectate":
                     UUID uuid = UUID.fromString(signs.getString(string + ".player"));
@@ -436,18 +422,6 @@ public final class SignManager {
         }
 
         return allSigns;
-    }
-
-    /**
-     * Returns a collection of all statistic signs
-     *
-     * @return all stat signs
-     * @since 5.8.5
-     */
-    @NotNull
-    @Contract(pure = true)
-    public Collection<StatSign> getStatSigns() {
-        return statSigns;
     }
 
     /**

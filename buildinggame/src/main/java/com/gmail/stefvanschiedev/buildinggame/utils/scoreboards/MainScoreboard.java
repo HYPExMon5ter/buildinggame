@@ -1,11 +1,7 @@
 package com.gmail.stefvanschiedev.buildinggame.utils.scoreboards;
 
-import java.time.LocalDateTime;
-import java.time.format.TextStyle;
-import java.util.*;
-import java.util.function.Supplier;
-import java.util.regex.Pattern;
-
+import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
+import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
 import com.google.common.primitives.Chars;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -15,13 +11,14 @@ import org.bukkit.scoreboard.DisplaySlot;
 import org.bukkit.scoreboard.Objective;
 import org.bukkit.scoreboard.Scoreboard;
 import org.bukkit.scoreboard.Team;
-
-import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+
+import java.time.LocalDateTime;
+import java.time.format.TextStyle;
+import java.util.*;
+import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 /**
  * The scoreboard displayed when you're in the main hub
@@ -89,51 +86,6 @@ public class MainScoreboard {
 			this.strings.add(MessageManager.translate(strings.get(i), player));
 		}
 
-		replacements.put("stat_plays", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.PLAYS);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-		});
-		replacements.put("stat_first", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.FIRST);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-		replacements.put("stat_second", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.SECOND);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_third", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.THIRD);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_broken", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.BROKEN);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_placed", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.PLACED);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_walked", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.WALKED);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_points_received", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.POINTS_RECEIVED);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
-        replacements.put("stat_points_given", () -> {
-            var stat = StatManager.getInstance().getStat(player, StatType.POINTS_GIVEN);
-
-            return stat == null ? "0" : String.valueOf(stat.getValue());
-        });
         replacements.put("date_day_of_month", () -> String.valueOf(LocalDateTime.now().getDayOfMonth()));
         replacements.put("date_day_of_week", () -> String.valueOf(LocalDateTime.now().getDayOfWeek()));
         replacements.put("date_day_of_year", () -> String.valueOf(LocalDateTime.now().getDayOfYear()));

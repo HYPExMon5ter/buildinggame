@@ -9,7 +9,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
-import org.bukkit.scoreboard.*;
+import org.bukkit.scoreboard.DisplaySlot;
+import org.bukkit.scoreboard.Objective;
+import org.bukkit.scoreboard.Scoreboard;
+import org.bukkit.scoreboard.Team;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -168,31 +171,8 @@ public abstract class ArenaScoreboard {
             if (vote == null)
                 return "?";
 
-            switch (vote.getPoints()) {
-                case 2:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.second-slot-block"));
-                case 3:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.third-slot-block"));
-                case 4:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.fourth-slot-block"));
-                case 5:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.fifth-slot-block"));
-                case 6:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.sixth-slot-block"));
-                case 7:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.seventh-slot-block"));
-                case 8:
-                    return ChatColor.translateAlternateColorCodes('&', messages
-                            .getString("voting.eighth-slot-block"));
-                default:
-                    return "?";
-            }
+
+            return "?";
         });
         replacements.put("first_players", player -> {
             var firstPlot = arena.getFirstPlot();

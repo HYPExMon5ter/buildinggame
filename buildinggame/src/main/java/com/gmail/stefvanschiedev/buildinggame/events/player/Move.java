@@ -89,11 +89,11 @@ public class Move implements Listener {
             teleportBack(arena.getVotingPlot(), player, from, to);
             return;
         }
-		
-		if (arena.getState() == GameState.RESETING) {
+
+		/*if (arena.getState() == GameState.RESETING) {
             teleportBack(arena.getFirstPlot(), player, from, to);
             return;
-		}
+		}*/
 		
 		if (arena.getState() != GameState.BUILDING) {
             return;

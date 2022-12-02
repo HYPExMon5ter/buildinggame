@@ -1063,17 +1063,6 @@ public class Arena {
     }
 
 	/**
-     * Sets the plot that became second after voting
-     *
-     * @param second the plot that became second
-     * @see Plot
-     * @since 3.0.0
-     */
-	public void setSecondPlot(Plot second) {
-		this.second = second;
-	}
-
-	/**
      * Sets the game state
      *
      * @param state the new state
@@ -1082,17 +1071,6 @@ public class Arena {
      */
 	public void setState(GameState state) {
 		this.state = state;
-	}
-
-	/**
-     * Sets the plot that became third after voting
-     *
-     * @param third the plot that became third
-     * @see Plot
-     * @since 3.0.0
-     */
-	public void setThirdPlot(Plot third) {
-		this.third = third;
 	}
 
 	/**
@@ -1175,58 +1153,6 @@ public class Arena {
 
 				//give blocks
 				player.getInventory().clear();
-				
-				if (gamePlayer.getGamePlayerType() == GamePlayerType.PLAYER) {
-                    config.getConfigurationSection("voting.items").getKeys(false).forEach(identifier -> {
-                        boolean save = false;
-
-                        if (!messages.contains("voting.items." + identifier + ".name")) {
-                            messages.set("voting.items." + identifier + ".name", "Type: Null");
-                            save = true;
-                        }
-
-                        if (!messages.contains("voting.items." + identifier + ".lore")) {
-                            messages.set("voting.items." + identifier + ".lore", new ArrayList<String>(0));
-                            save = true;
-                        }
-
-                        if (save)
-                            instance.save();
-
-                        Material material = SettingsManager.getInstance().getMaterial(
-                            "voting.items." + identifier + ".id", Material.BARRIER
-                        );
-                        int points = config.getInt("voting.items." + identifier + ".points");
-
-                        player.getInventory().setItem(
-                            config.getInt("voting.items." + identifier + ".slot") - 1,
-                            new ItemBuilder(player, material)
-                                .setDisplayName(MessageManager.translate(
-                                    messages.getString("voting.items." + identifier + ".name")
-                                ))
-                                .setLore(MessageManager.translate(
-                                    messages.getStringList("voting.items." + identifier + ".lore")
-                                ))
-                                .movable(false)
-                                .addContext("arena", ArenaDataType.getInstance(), this)
-                                .addContext("points", PersistentDataType.INTEGER, points)
-                                .setClickEvent(ClickEvent.VOTE_CLICK)
-                                .build()
-                        );
-                    });
-
-                    boolean worldEditEnabled = Bukkit.getPluginManager().isPluginEnabled("WorldEdit");
-
-                    if (worldEditEnabled && config.getBoolean("reports.enable")) {
-                        player.getInventory().setItem(8, new ItemBuilder(player, Material.BOOK)
-                            .setDisplayName(ChatColor.RED + "Report build")
-                            .movable(false)
-                            .addContext("arena", ArenaDataType.getInstance(), this)
-                            .setClickEvent(ClickEvent.REPORT_CLICK)
-                            .build()
-                        );
-                    }
-                }
 
 				//update scoreboard and update time and weather
 				if (config.getBoolean("scoreboards.vote.enable"))
@@ -1327,7 +1253,6 @@ public class Arena {
 		subject = getSubjectMenu().getHighestVote();
 		
 		//update bossbar
-
         getBossBar().setTitle(MessageManager.translate(messages.getString("global.bossbar-header")
 				.replaceAll("%subject%", subject)));
 		
@@ -1363,6 +1288,7 @@ public class Arena {
                 }
 				
 				//bossbar
+                bossbar.addPlayer(player);
 				getBossBar().setVisible(true);
 
                 tryGiveOptionsMenu(player);
@@ -1388,12 +1314,19 @@ public class Arena {
      */
 	public void nextMatch() {
         YamlConfiguration arenas = SettingsManager.getInstance().getArenas();
+        YamlConfiguration messages = SettingsManager.getInstance().getMessages();
         if (buildTimer.isActive()) {
             buildTimer.cancel();
         }
         if (voteTimer.isActive()) {
             voteTimer.cancel();
         }
+
+        /*getBossBar().setTitle(MessageManager.translate(messages.getString("global.bossbar-header")
+            .replace("%subject%", "?")));
+        getBossBar().setVisible(false);
+
+        getBossBar().getPlayers().forEach(player -> getBossBar().removePlayer(player));*/
 
         setState(GameState.WAITING);
         this.buildTimer = new BuildTimer(arenas.getInt(name + ".timer"), this);
@@ -1403,8 +1336,6 @@ public class Arena {
         subject = null;
 
         setFirstPlot(null);
-        setSecondPlot(null);
-        setThirdPlot(null);
 
         getVotedPlots().clear();
 
@@ -1432,7 +1363,6 @@ public class Arena {
 
         subjectMenu = new SubjectMenu();
         SignManager.getInstance().updateJoinSigns(this);
-
 
     }
 
@@ -1482,7 +1412,7 @@ public class Arena {
                 .forEach(gp -> gp.getPlayer().setScoreboard(Bukkit.getScoreboardManager().getNewScoreboard()));
         });
 
-		getPlots().forEach(plot -> plot.getAllGamePlayers().clear());
+		//getPlots().forEach(plot -> plot.getAllGamePlayers().clear());
 
 		this.matches = 0;
 

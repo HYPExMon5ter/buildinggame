@@ -1,33 +1,30 @@
 package com.gmail.stefvanschiedev.buildinggame.managers.files;
 
-import java.io.*;
+import com.gmail.stefvanschiedev.buildinggame.Main;
+import com.gmail.stefvanschiedev.buildinggame.timers.FileCheckerTimer;
+import com.gmail.stefvanschiedev.buildinggame.utils.Report;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.logging.Logger;
-
-import com.gmail.stefvanschiedev.buildinggame.timers.FileCheckerTimer;
-import com.gmail.stefvanschiedev.buildinggame.utils.JsonReaderUtil;
-import com.gmail.stefvanschiedev.buildinggame.utils.Report;
-import com.gmail.stefvanschiedev.buildinggame.utils.TopStatHologram;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.TypeAdapter;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonWriter;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.plugin.Plugin;
-
-import com.gmail.stefvanschiedev.buildinggame.Main;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * This class handles all settings in all files
@@ -227,24 +224,6 @@ public final class SettingsManager {
 				e.printStackTrace();
 			}
 		}
-
-		if (hologramsFile.exists()) {
-		    TopStatHologram.clearAll();
-
-            try {
-                var jsonReader = new Gson().newJsonReader(new InputStreamReader(new FileInputStream(hologramsFile)));
-
-                jsonReader.beginArray();
-
-                while (jsonReader.hasNext())
-                    TopStatHologram.load(jsonReader);
-
-                jsonReader.endArray();
-            } catch (EOFException ignore) {
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
 
 		if (!winnerSchematicsFolder.exists()) {
             boolean directoryCreationSuccess = winnerSchematicsFolder.mkdirs();
@@ -476,54 +455,6 @@ public final class SettingsManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        //we use a thread instead of a bukkitrunnable, because this method may be called when the plugin is disabling
-        new Thread(() -> {
-            try {
-                if (!hologramsFile.exists() && !hologramsFile.createNewFile()) {
-                    Main.getInstance().getLogger().warning("Unable to create holograms file");
-                    return;
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
-            try (var writer = new JsonWriter(new OutputStreamWriter(new FileOutputStream(hologramsFile)))) {
-                writer.beginArray();
-
-                TopStatHologram.getHolograms().forEach(hologram -> {
-                    try {
-                        writer.jsonValue(
-                            new GsonBuilder().excludeFieldsWithoutExposeAnnotation().registerTypeAdapter(Location.class, new TypeAdapter<Location>() {
-                                @Override
-                                public void write(JsonWriter jsonWriter, Location location) throws IOException {
-                                    jsonWriter
-                                        .beginObject()
-                                        .name("world").value(location.getWorld().getName())
-                                        .name("x").value(location.getX())
-                                        .name("y").value(location.getY())
-                                        .name("z").value(location.getZ())
-                                        .name("yaw").value(location.getYaw())
-                                        .name("pitch").value(location.getPitch())
-                                        .endObject();
-                                }
-
-                                @Override
-                                public Location read(JsonReader jsonReader) throws IOException {
-                                    return JsonReaderUtil.parseLocation(jsonReader);
-                                }
-                            }).create().toJson(hologram)
-                        );
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                });
-
-                writer.endArray();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }).start();
     }
 
 	/**

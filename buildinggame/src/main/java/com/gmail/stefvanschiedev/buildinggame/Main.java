@@ -22,10 +22,6 @@ import com.gmail.stefvanschiedev.buildinggame.events.scoreboards.MainScoreboardJ
 import com.gmail.stefvanschiedev.buildinggame.events.scoreboards.MainScoreboardWorldChange;
 import com.gmail.stefvanschiedev.buildinggame.events.softdependencies.NPCCreate;
 import com.gmail.stefvanschiedev.buildinggame.events.softdependencies.WorldEditBoundaryAssertion;
-import com.gmail.stefvanschiedev.buildinggame.events.stats.database.JoinPlayerStats;
-import com.gmail.stefvanschiedev.buildinggame.events.stats.database.QuitPlayerStats;
-import com.gmail.stefvanschiedev.buildinggame.events.stats.saved.*;
-import com.gmail.stefvanschiedev.buildinggame.events.stats.unsaved.UnsavedStatsPlace;
 import com.gmail.stefvanschiedev.buildinggame.events.structure.TreeGrow;
 import com.gmail.stefvanschiedev.buildinggame.managers.arenas.*;
 import com.gmail.stefvanschiedev.buildinggame.managers.commands.CommandManager;
@@ -37,15 +33,14 @@ import com.gmail.stefvanschiedev.buildinggame.managers.plots.LocationManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.plots.PlotManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.softdependencies.PlaceholderAPIPlaceholders;
 import com.gmail.stefvanschiedev.buildinggame.managers.softdependencies.SDVault;
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
-import com.gmail.stefvanschiedev.buildinggame.timers.*;
-import com.gmail.stefvanschiedev.buildinggame.utils.Achievement;
+import com.gmail.stefvanschiedev.buildinggame.timers.EntityTimer;
+import com.gmail.stefvanschiedev.buildinggame.timers.LoadCooldown;
+import com.gmail.stefvanschiedev.buildinggame.timers.ParticleRender;
+import com.gmail.stefvanschiedev.buildinggame.timers.ScoreboardUpdater;
 import com.gmail.stefvanschiedev.buildinggame.utils.NPCFloorChangeTrait;
-import com.gmail.stefvanschiedev.buildinggame.utils.TopStatHologram;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.Arena;
 import com.gmail.stefvanschiedev.buildinggame.utils.arena.ArenaMode;
 import com.gmail.stefvanschiedev.buildinggame.utils.bungeecord.BungeeCordHandler;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import com.sk89q.worldedit.WorldEdit;
 import net.citizensnpcs.api.CitizensAPI;
 import net.citizensnpcs.api.trait.TraitInfo;
@@ -121,11 +116,6 @@ public class Main extends JavaPlugin {
             if (arena.getPlayers() > 0)
                 arena.stop();
         }
-
-        if (StatManager.getInstance().getMySQLDatabase() == null)
-            StatManager.getInstance().saveToFile();
-        else
-            StatManager.getInstance().saveToDatabase();
 
         if (!SettingsManager.getInstance().getRunnable().isCancelled())
             SettingsManager.getInstance().getRunnable().cancel();
@@ -230,14 +220,6 @@ public class Main extends JavaPlugin {
 
                 return mode;
             });
-            manager.getCommandContexts().registerContext(StatType.class, context -> {
-                var type = StatType.valueOf(context.popFirstArg().toUpperCase(Locale.getDefault()));
-
-                if (type == null)
-                    throw new InvalidCommandArgument("This statistic type doesn't exist");
-
-                return type;
-            });
 
             //register completions
             manager.getCommandCompletions().registerCompletion("arenas", context ->
@@ -248,10 +230,7 @@ public class Main extends JavaPlugin {
                 Stream.of(ArenaMode.values())
                     .map(mode -> mode.toString().toUpperCase(Locale.getDefault()))
                     .collect(Collectors.toList()));
-            manager.getCommandCompletions().registerCompletion("stattypes", context ->
-                Stream.of(StatType.values()).map(Enum::toString).collect(Collectors.toList()));
-            manager.getCommandCompletions().registerCompletion("holograms", context ->
-                TopStatHologram.getHolograms().stream().map(TopStatHologram::getName).collect(Collectors.toList()));
+
 
             //register conditions
             manager.getCommandConditions().addCondition(String.class, "arenanotexist",
@@ -266,10 +245,6 @@ public class Main extends JavaPlugin {
         }
 
         getLogger().info("Loading stats");
-        StatManager.getInstance().setup();
-
-        //loading achievements should happen after the statistics have been loaded
-        Achievement.loadAchievements();
 
         getLogger().info("Loading listeners");
         if (!reload) {
@@ -277,7 +252,6 @@ public class Main extends JavaPlugin {
             pm.registerEvents(new BlockEdit(), this);
             pm.registerEvents(new JoinSignCreate(), this);
             pm.registerEvents(new LeaveSignCreate(), this);
-            pm.registerEvents(new StatSignCreate(), this);
             pm.registerEvents(new UpdateLoadedSigns(), this);
             pm.registerEvents(new SpectateSignCreate(), this);
             pm.registerEvents(new SignBreak(), this);
@@ -324,24 +298,8 @@ public class Main extends JavaPlugin {
             pm.registerEvents(new MainScoreboardJoinShow(), this);
             pm.registerEvents(new MainScoreboardWorldChange(), this);
 
-            //stats
-            //saved
-            pm.registerEvents(new BreakStat(), this);
-            pm.registerEvents(new FirstStat(), this);
-            pm.registerEvents(new PlaceStat(), this);
-            pm.registerEvents(new PlaysStat(), this);
-            pm.registerEvents(new SecondStat(), this);
-            pm.registerEvents(new ThirdStat(), this);
-            //unsaved
-            pm.registerEvents(new UnsavedStatsPlace(), this);
-
             //structure
             pm.registerEvents(new TreeGrow(), this);
-
-            if (StatManager.getInstance().getMySQLDatabase() != null) {
-                pm.registerEvents(new JoinPlayerStats(), this);
-                pm.registerEvents(new QuitPlayerStats(), this);
-            }
         }
 
         getLogger().info("Loading signs");
@@ -351,10 +309,7 @@ public class Main extends JavaPlugin {
         new ParticleRender().runTaskTimer(this, 0L, 10L);
         new ScoreboardUpdater().runTaskTimer(this, 0L, SettingsManager.getInstance().getConfig()
             .getLong("scoreboard-update-delay"));
-        new StatSaveTimer().runTaskTimerAsynchronously(this, 0L, SettingsManager.getInstance().getConfig()
-            .getLong("stats.save-delay"));
         new EntityTimer().runTaskTimer(this, 0L, 20L);
-        new StatSignUpdater().runTaskTimerAsynchronously(this, 0L, 1L);
 
         long end = System.currentTimeMillis();
 

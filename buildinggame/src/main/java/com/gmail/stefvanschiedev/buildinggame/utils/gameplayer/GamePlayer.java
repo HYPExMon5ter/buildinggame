@@ -1,28 +1,30 @@
 package com.gmail.stefvanschiedev.buildinggame.utils.gameplayer;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.util.*;
-
+import com.gmail.stefvanschiedev.buildinggame.Main;
+import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import com.gmail.stefvanschiedev.buildinggame.managers.messages.MessageManager;
-import com.gmail.stefvanschiedev.buildinggame.managers.stats.StatManager;
 import com.gmail.stefvanschiedev.buildinggame.utils.bungeecord.BungeeCordHandler;
 import com.gmail.stefvanschiedev.buildinggame.utils.bungeecord.IdentifiedCallable;
 import com.gmail.stefvanschiedev.buildinggame.utils.potential.PotentialLocation;
-import com.gmail.stefvanschiedev.buildinggame.utils.stats.StatType;
 import net.kyori.text.adapter.bukkit.TextAdapter;
 import net.kyori.text.serializer.legacy.LegacyComponentSerializer;
-import org.bukkit.*;
+import org.bukkit.Chunk;
+import org.bukkit.GameMode;
+import org.bukkit.Statistic;
+import org.bukkit.World;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.scoreboard.Scoreboard;
-
-import com.gmail.stefvanschiedev.buildinggame.Main;
-import com.gmail.stefvanschiedev.buildinggame.managers.files.SettingsManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.List;
 
 /**
  * A wrapper class for players which contains useful methods for sending titles and keeping track of stats. This wrapper
@@ -93,11 +95,6 @@ public class GamePlayer {
 	private final Scoreboard scoreboard;
 
     /**
-     * The previous amount of centimeters walked in order to determine the amount of block walked during the game
-     */
-	private final int walkOnceCM;
-
-    /**
      * A list of titles that still need to be send
      */
 	private final List<String> titles;
@@ -134,8 +131,6 @@ public class GamePlayer {
 		inventory = player.getInventory().getContents();
 		armor = player.getInventory().getArmorContents();
 		scoreboard = player.getScoreboard();
-
-		walkOnceCM = player.getStatistic(Statistic.WALK_ONE_CM);
 		
 		titles = new ArrayList<>();
 		subtitles = new ArrayList<>();
@@ -381,17 +376,6 @@ public class GamePlayer {
 		player.getInventory().setContents(inventory);
 		player.setLevel(levels);
 		player.setScoreboard(scoreboard);
-
-		//apply walked statistic
-        StatManager instance = StatManager.getInstance();
-
-        var stat = instance.getStat(player, StatType.WALKED);
-
-        instance.registerStat(
-            player,
-            StatType.WALKED,
-            (stat == null ? 0 : stat.getValue()) + (player.getStatistic(Statistic.WALK_ONE_CM) - walkOnceCM) / 100
-        );
 	}
 
     /**
