@@ -328,8 +328,8 @@ public class CommandManager extends BaseCommand {
     @Description("Force a winner to be chosen")
     @CommandPermission("bg.winner")
     @CommandCompletion("@players")
-    public void onWinner(Player player, Player winner) {
-        var playerArena = ArenaManager.getInstance().getArena(player);
+    public void onSetWinner(Player player, String winner) {
+        var playerArena = ArenaManager.getInstance().getArena("Game1");
 
         if (playerArena != null) {
             if (playerArena.getState() == GameState.BUILDING) {
@@ -341,12 +341,15 @@ public class CommandManager extends BaseCommand {
                 return;
             }
 
+            //MessageManager.getInstance().send(player, ChatColor.GREEN + "Player: " + player.getName() + " | Winner: " + winner);
+
             playerArena.getUsedPlots().stream().flatMap(plot -> plot.getGamePlayers().stream()).forEach(arenaPlayer -> {
-                if (arenaPlayer.getPlayer() != winner) {
-                    arenaPlayer.addTitleAndSubtitle("The winner is", winner.getName());
+                if (!arenaPlayer.getPlayer().getName().equals(winner)) {
+                    arenaPlayer.addTitleAndSubtitle(ChatColor.DARK_AQUA + "The winner is", ChatColor.AQUA + winner);
                 } else {
-                    arenaPlayer.addTitleAndSubtitle("Congrats!", "You won!");
+                    arenaPlayer.addTitleAndSubtitle(ChatColor.AQUA + "Congratulations!", ChatColor.DARK_AQUA + "You have won!");
                 }
+
             });
 
             playerArena.nextMatch();
