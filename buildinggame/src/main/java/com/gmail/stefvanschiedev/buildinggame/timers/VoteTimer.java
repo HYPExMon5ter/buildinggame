@@ -83,14 +83,14 @@ public class VoteTimer extends Timer {
         running = true;
 
         //Code to run when voting first starts
-        if (plotsVisited == null || plotsVisited.isEmpty()) {
+        if (plotsVisited == null) {
 
-            if (!VoteTimer.spectators.isEmpty()) {
+            /*if (!VoteTimer.spectators.isEmpty()) {
                 for (Player spectator : spectators) {
                     plot.getAllGamePlayers().forEach(pl ->
                         spectator.hidePlayer(Main.getInstance(), pl.getPlayer()));
                 }
-            }
+            }*/
 
             for (Player player : Bukkit.getOnlinePlayers()) {
                 if (player.hasPermission("bg.info")) {
@@ -102,10 +102,22 @@ public class VoteTimer extends Timer {
                 var player = gamePlayer.getPlayer();
                 plotsVisited.add(player);
             }));
+            for (Player p : plotsVisited) {
+                Bukkit.getLogger().info("Plotvisited: " + p.getName());
+            }
         }
 
-        if (seconds == originalSeconds) {
-            visiting = plotsVisited.listIterator().next();
+        if (seconds == (originalSeconds-1) && !plotsVisited.isEmpty()) {
+            for (Player p : plotsVisited) {
+                Bukkit.getLogger().info("p: " + p.getName());
+                //if (visiting != p) {
+                //Bukkit.getLogger().info("visiting: " + visiting);
+                visiting = p;
+                //}
+            }
+            Bukkit.getLogger().info("visiting: " + visiting.getName());
+            //visiting = plotsVisited.listIterator().next();
+            //Bukkit.getLogger().info("Visiting: " + visiting.getName());
             //Bukkit.getLogger().warning("Visiting: " + visiting.getName());
 
             plot = arena.getPlot(visiting);
@@ -125,10 +137,9 @@ public class VoteTimer extends Timer {
                 player.setPlayerTime(this.plot.getTime(), false);
                 player.setPlayerWeather(this.plot.isRaining() ? WeatherType.DOWNFALL : WeatherType.CLEAR);
             }));
-
             arena.setVotingPlot(plot);
-
-
+            Bukkit.getLogger().info("Removing: " + visiting);
+            plotsVisited.remove(visiting);
         }
 
         if (seconds <= 0) {
@@ -148,12 +159,15 @@ public class VoteTimer extends Timer {
                         .replace("%playerplot%", visiting.getName()));
                 }
             });
-            plotsVisited.remove(visiting);
+            //Bukkit.getLogger().info("Removing: " + visiting);
+            //plotsVisited.remove(visiting);
+            //visiting = plotsVisited.listIterator().next();
 
             //called on last plot, resetting phase
 
             if (plotsVisited.isEmpty()) {
                 //resetting
+                Bukkit.getLogger().info("Resetting");
                 arena.setState(GameState.RESETING);
                 plotsVisited.clear();
                 running = false;
@@ -164,12 +178,12 @@ public class VoteTimer extends Timer {
                     plot.getArena().getLobby().teleport(pl);
                 });
 
-                if (!VoteTimer.spectators.isEmpty()) {
+                /*if (!VoteTimer.spectators.isEmpty()) {
                     for (Player spectator : spectators) {
                         plot.getAllGamePlayers().forEach(pl ->
                             spectator.showPlayer(Main.getInstance(), pl.getPlayer()));
                     }
-                }
+                }*/
                 return;
             }
             seconds = originalSeconds;

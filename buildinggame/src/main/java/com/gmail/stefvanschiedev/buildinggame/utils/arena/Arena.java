@@ -626,7 +626,8 @@ public class Arena {
 
             messages.getStringList("join.otherPlayers").forEach(message ->
                 MessageManager.getInstance().send(pla, message
-                    .replace("%player%", name)
+                    .replace("%player%", player.getName())
+                    .replace("%arena%", name)
                     .replace("%players%", getPlayers() + "")
                     .replace("%max_players%", getMaxPlayers() + "")));
         });

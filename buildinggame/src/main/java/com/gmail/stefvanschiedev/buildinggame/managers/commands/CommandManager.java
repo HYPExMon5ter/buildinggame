@@ -329,8 +329,6 @@ public class CommandManager extends BaseCommand {
     @CommandPermission("bg.winner")
     @CommandCompletion("@players")
     public void onWinner(Player player, Player winner) {
-        //YamlConfiguration messages = SettingsManager.getInstance().getMessages();
-
         var playerArena = ArenaManager.getInstance().getArena(player);
 
         if (playerArena != null) {
@@ -342,7 +340,7 @@ public class CommandManager extends BaseCommand {
                 MessageManager.getInstance().send(player, ChatColor.RED + "Please specify a winner");
                 return;
             }
-            //playerArena.leave(player, false);
+
             playerArena.getUsedPlots().stream().flatMap(plot -> plot.getGamePlayers().stream()).forEach(arenaPlayer -> {
                 if (arenaPlayer.getPlayer() != winner) {
                     arenaPlayer.addTitleAndSubtitle("The winner is", winner.getName());
@@ -352,7 +350,7 @@ public class CommandManager extends BaseCommand {
             });
 
             playerArena.nextMatch();
-            //playerArena.nextMatch();
+
         }
     }
 
@@ -903,8 +901,6 @@ public class CommandManager extends BaseCommand {
     /**
      * Called whenever a player wants to spectate
      *
-     * @param player the player
-     * @param toSpectate the player to spectate
      * @since 5.8.0
      */
     @Subcommand("spectate")
