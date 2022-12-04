@@ -609,11 +609,46 @@ public class Arena {
 
 		for (Plot pl : getPlots()) {
 			if (!pl.isFull()) {
-			    plot = pl;
+                Bukkit.getLogger().info("Not full - IGN: " + p.getPlayer().getName() + " | PlotID: " + Integer.toString(pl.getId()));
+                if (p.getPlayer().getName().equals("WisdomGamer01") && pl.getId() == 1) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("WisdomGamer02") && pl.getId() == 2) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("jinglebuilder") && pl.getId() == 3) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("WisdomGamer04") && pl.getId() == 4) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("WisdomRaven05") && pl.getId() == 5) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("RavenGamer06") && pl.getId() == 6) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("RavenGamer07") && pl.getId() == 7) {
+                    pl.join(p);
+                    break;
+                }
+                if (p.getPlayer().getName().equals("RavenGamer08") && pl.getId() == 8) {
+                    pl.join(p);
+                    break;
+                }
+			    /*plot = pl;
 
 				pl.join(p);
-				break;
-			}
+				break;*/
+			} else {
+                Bukkit.getLogger().info("Full - IGN: " + p.getPlayer().getName() + " | PlotID: " + Integer.toString(pl.getId()));
+            }
 		}
 
         messages.getStringList("join.message").forEach(message ->

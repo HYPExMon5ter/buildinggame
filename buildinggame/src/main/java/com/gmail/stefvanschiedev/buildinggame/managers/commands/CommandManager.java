@@ -344,12 +344,7 @@ public class CommandManager extends BaseCommand {
             //MessageManager.getInstance().send(player, ChatColor.GREEN + "Player: " + player.getName() + " | Winner: " + winner);
 
             playerArena.getUsedPlots().stream().flatMap(plot -> plot.getGamePlayers().stream()).forEach(arenaPlayer -> {
-                if (!arenaPlayer.getPlayer().getName().equals(winner)) {
-                    arenaPlayer.addTitleAndSubtitle(ChatColor.DARK_AQUA + "The winner is", ChatColor.AQUA + winner);
-                } else {
-                    arenaPlayer.addTitleAndSubtitle(ChatColor.AQUA + "Congratulations!", ChatColor.DARK_AQUA + "You have won!");
-                }
-
+                arenaPlayer.addTitleAndSubtitle(ChatColor.DARK_AQUA + "The winner is", ChatColor.AQUA + winner + "!");
             });
 
             playerArena.nextMatch();
